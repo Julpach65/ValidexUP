@@ -2,12 +2,12 @@
 
 **Sistema Web de Validacion Biometrica Zero-Trust**
 
-Validex UP (Unified Protection) es la solucion definitiva para mitigar el fraude y errores humanos en los procesos de la industria pesada y logistica. Nuestro sistema garantiza que ninguna accion critica (como la liberacion de pipas u ordenes de despacho) sea ejecutada sin pasar por un estricto modelo de autenticacion de 3 factores.
+Validex UP (Unified Protection) es la solucion definitiva para mitigar el fraude y errores humanos en los procesos de la industria pesada y logistica. Nuestro sistema garantiza que ninguna accion critica sea ejecutada sin pasar por un estricto modelo de autenticacion de 3 factores.
 
 ## Arquitectura Zero-Trust del MVP
 El MVP se basa en un flujo estricto secuencial:
 1. **Credenciales (Paso 1):** Acceso Base (Usuario y Password).
-2. **MFA Temporal (Paso 2):** Envio y validacion de SMS OTP a traves de Twilio Verify (Expira en 5 minutos).
+2. **MFA Temporal (Paso 2):** Envio y validacion de SMS OTP a traves de Twilio Verify.
 3. **Validacion Biometrica (Paso 3):** Inteligencia Artificial mediante DeepFace para comparacion facial contra la base de datos de operadores autorizados a traves de captura Webcam.
 4. **Autorizacion (Paso 4):** Acceso al Dashboard de operaciones y despachos.
 
@@ -30,4 +30,3 @@ Seguimos un flujo de trabajo profesional para proteger la rama principal de prod
 ## Inicializacion Local
 Este repositorio alojara todos los submodulos o carpetas de cada capa arquitectonica para asegurar el flujo agil en solo 4 semanas de desarrollo.
 
-> Construido para estandarizar la seguridad industrial bajo un diseno de vanguardia.
