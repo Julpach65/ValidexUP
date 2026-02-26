@@ -1,0 +1,35 @@
+# Node / Next.js
+node_modules/
+.next/
+out/
+build/
+.env*.local
+.vercel/
+
+# Python / FastAPI
+__pycache__/
+*.py[cod]
+*$py.class
+\venv/
+\.env/
+env/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# DB
+*.sqlite3
+
+# OS Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+
+# Editor directories and files
+.idea/
+.vscode/
+*.swp
+*.swo
