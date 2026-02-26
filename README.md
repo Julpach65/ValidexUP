@@ -2,7 +2,7 @@
 
 **Sistema Web de Validacion Biometrica Zero-Trust**
 
-Validex UP (Unified Protection) es la solucion definitiva para mitigar el fraude y errores humanos en los procesos de la industria pesada y logistica. Nuestro sistema garantiza que ninguna accion critica sea ejecutada sin pasar por un estricto modelo de autenticacion de 3 factores.
+Validex UP (Unified Protection) es una solucion para mitigar el fraude y errores humanos en los procesos de la industria pesada y logistica. Nuestro sistema garantiza que ninguna accion critica sea ejecutada sin pasar por un estricto modelo de autenticacion de 3 factores.
 
 ## Arquitectura Zero-Trust del MVP
 El MVP se basa en un flujo estricto secuencial:
