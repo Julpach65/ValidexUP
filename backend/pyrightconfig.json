@@ -1,0 +1,10 @@
+{
+    "venvPath": ".",
+    "venv": "venv",
+    "pythonVersion": "3.11",
+    "include": [
+        "app"
+    ],
+    "reportMissingImports": false,
+    "reportMissingModuleSource": false
+}
