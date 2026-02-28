@@ -19,8 +19,10 @@ class Settings(BaseSettings):
     TWILIO_ACCOUNT_SID: Optional[str] = None
     TWILIO_AUTH_TOKEN: Optional[str] = None
     TWILIO_VERIFY_SERVICE_SID: Optional[str] = None
+    MOCK_SMS: bool = True
 
     class Config:
+
         env_file = ".env"
         case_sensitive = True
 
