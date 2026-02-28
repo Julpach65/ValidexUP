@@ -10,11 +10,14 @@ build/
 __pycache__/
 *.py[cod]
 *$py.class
-\venv/
-\.env/
+venv/
+.env
+.env/
 env/
 .venv/
+stitch.zip
 pip-log.txt
+
 pip-delete-this-directory.txt
 
 # DB
