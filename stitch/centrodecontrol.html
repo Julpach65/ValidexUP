@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Validex UP Control Center - Dynamic Data Oversight</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#10B981", // Emerald Green
+                        obsidian: "#0F172A",
+                        slate_panel: "#1E293B",
+                    },
+                    fontFamily: {
+                        display: ["Space Grotesk", "sans-serif"],
+                        body: ["Inter", "sans-serif"],
+                    },
+                    boxShadow: {
+                        'glow-emerald': '0 0 20px rgba(16, 185, 129, 0.2)',
+                        'glow-blue': '0 0 20px rgba(59, 130, 246, 0.2)',
+                    }
+                },
+            },
+        };
+    </script>
+<style type="text/tailwindcss">
+        @layer base {
+            body {
+                @apply bg-obsidian text-slate-300 font-body antialiased overflow-hidden h-screen flex flex-col;
+            }
+            h1, h2, h3, .title-font {
+                @apply font-display;
+            }
+        }
+        .glass-panel {
+            background-color: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .accent-gradient {
+            background: radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.1) 0%, transparent 70%);
+        }
+    </style>
+</head>
+<body>
+<header class="w-full bg-obsidian/80 backdrop-blur-md border-b border-white/5 px-8 py-4 flex items-center justify-between z-50">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/30">
+<span class="material-symbols-outlined text-primary text-2xl">verified_user</span>
+</div>
+<div class="text-xl font-display font-bold tracking-tight">
+<span class="text-white">Validex</span>
+<span class="text-primary">UP</span>
+</div>
+</div>
+<div class="absolute left-1/2 transform -translate-x-1/2 hidden md:block">
+<button class="bg-primary hover:bg-emerald-400 text-obsidian font-bold py-2 px-6 rounded-full flex items-center gap-2 transition-all duration-300 shadow-glow-emerald">
+<span class="material-symbols-outlined text-xl">arrow_back</span>
+<span>Volver al inicio</span>
+</button>
+</div>
+<div class="flex items-center gap-6">
+<button class="text-slate-400 hover:text-primary transition-colors relative">
+<span class="material-symbols-outlined text-2xl">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border-2 border-obsidian"></span>
+</button>
+<div class="h-8 w-px bg-white/10 mx-1"></div>
+<div class="flex items-center gap-3">
+<div class="text-right hidden sm:block">
+<p class="text-sm font-bold text-white leading-tight">EL NOYER</p>
+<p class="text-[10px] text-primary font-bold tracking-widest uppercase">PATRON</p>
+</div>
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-white/10">
+<img alt="User Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAgiNZ7npo88yTlikH_HPIinhlnkNFRxTs5p5KyK0a0bmu6kHs7Xzm2mI14X4WjbqN12qvE88pwRQwdyB06dV3UkeYo64hMk4UOyC4yf3w8QRyp2hVCjvm7UUmBAVFk0LdQNZozCoawVIDlcBip6W2AQTFb_p8LM-hpq0C01V9AhkUNB4r9JynrnUQ6mousY2ZappFun2JJQIsk8XvF5_sIycm6lEI5NTTP0VabHsjX_jbltqiCrxWgWuFQcJvnMEp7GhPfO5-6yZA"/>
+</div>
+</div>
+</div>
+</header>
+<main class="flex-grow flex flex-col items-center justify-center px-4 relative">
+<div class="absolute inset-0 overflow-hidden pointer-events-none -z-10 accent-gradient"></div>
+<div class="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px]"></div>
+<div class="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-blue-500/5 rounded-full blur-[120px]"></div>
+<div class="w-full max-w-6xl flex flex-col items-center text-center">
+<h1 class="text-5xl md:text-6xl font-bold text-white mb-4 tracking-tight">
+                Centro de Control
+            </h1>
+<p class="text-lg text-slate-400 max-w-2xl mb-16 leading-relaxed">
+                Seleccione una operación para comenzar. Bitácora en tiempo real y gestión de recursos activos.
+            </p>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-5xl">
+<div class="group glass-panel rounded-2xl p-12 flex flex-col items-center text-center hover:border-primary/40 transition-all duration-500 hover:shadow-glow-emerald hover:-translate-y-2">
+<div class="w-24 h-24 rounded-full bg-primary/5 flex items-center justify-center mb-8 border border-primary/20 group-hover:scale-110 group-hover:bg-primary/10 transition-all duration-500">
+<span class="material-symbols-outlined text-primary text-5xl">local_shipping</span>
+</div>
+<h2 class="text-2xl font-bold text-white mb-4">
+                        Gestión de Pipas y Descargas
+                    </h2>
+<p class="text-slate-400 mb-10 leading-relaxed max-w-xs">
+                        Control de flujo y recepción de material. Monitoreo de unidades en tránsito y validación de entradas.
+                    </p>
+<a class="mt-auto text-xs font-bold text-primary flex items-center gap-2 tracking-[0.2em] group-hover:gap-4 transition-all uppercase" href="#">
+                        Acceder al Módulo
+                        <span class="material-symbols-outlined text-lg">arrow_forward</span>
+</a>
+</div>
+<div class="group glass-panel rounded-2xl p-12 flex flex-col items-center text-center hover:border-blue-400/40 transition-all duration-500 hover:shadow-glow-blue hover:-translate-y-2">
+<div class="w-24 h-24 rounded-full bg-blue-500/5 flex items-center justify-center mb-8 border border-blue-500/20 group-hover:scale-110 group-hover:bg-blue-500/10 transition-all duration-500">
+<span class="material-symbols-outlined text-blue-400 text-5xl">database</span>
+</div>
+<h2 class="text-2xl font-bold text-white mb-4">
+                        Bitácora y Auditoría
+                    </h2>
+<p class="text-slate-400 mb-10 leading-relaxed max-w-xs">
+                        Registro y supervisión de datos. Trazabilidad de operaciones y reportes.
+                    </p>
+<a class="mt-auto text-xs font-bold text-blue-400 flex items-center gap-2 tracking-[0.2em] group-hover:gap-4 transition-all uppercase" href="#">
+                        Consultar Registros
+                        <span class="material-symbols-outlined text-lg">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+</main>
+<footer class="w-full bg-obsidian border-t border-white/5 py-4 px-8 mt-auto">
+<div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center text-[11px] font-medium tracking-wider text-slate-500 uppercase">
+<div class="flex items-center gap-2 mb-2 md:mb-0">
+<span class="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
+<span>Seleccion de modulo</span>
+</div>
+<div class="text-center md:text-right">
+                © 2026 Validex UP Systems. Todos los derechos reservados.
+            </div>
+</div>
+</footer>
+
+</body></html>

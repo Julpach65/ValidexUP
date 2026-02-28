@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Validex UP - Crear Cuenta</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              obsidian: "#0F172A",
+              panel: "#1E293B",
+              primary: "#10B981",
+              "primary-hover": "#059669",
+            },
+            fontFamily: {
+              display: ["Space Grotesk", "sans-serif"],
+              sans: ["Inter", "sans-serif"],
+            },
+          },
+        },
+      };
+    </script>
+<style type="text/tailwindcss">
+        @layer components {
+            .glass-card {
+                background-color: rgba(30, 41, 59, 0.8);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+            }
+            .industrial-input {
+                @apply bg-obsidian border-slate-700 text-white placeholder-slate-500 focus:ring-primary focus:border-primary;
+            }
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #334155; 
+        }
+    </style>
+</head>
+<body class="font-sans antialiased min-h-screen flex flex-col bg-obsidian text-slate-300 relative overflow-x-hidden selection:bg-primary selection:text-obsidian">
+<div class="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+<div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-primary/5 rounded-full blur-[140px]"></div>
+<div class="absolute bottom-[-5%] right-[-5%] w-[30%] h-[30%] bg-emerald-900/10 rounded-full blur-[100px]"></div>
+</div>
+<nav class="relative z-10 w-full px-6 py-6 flex justify-between items-center max-w-7xl mx-auto">
+<div class="flex items-center space-x-3">
+<div class="w-8 h-8 flex items-center justify-center rounded bg-primary/20 border border-primary/30 text-primary">
+<span class="material-icons-round text-xl">verified_user</span>
+</div>
+<span class="text-xl font-bold tracking-tight text-white font-display">Validex <span class="text-primary">UP</span></span>
+</div>
+<div class="text-sm font-medium">
+<span class="text-slate-400">¿Ya tienes cuenta?</span>
+<a class="ml-2 text-primary hover:text-emerald-400 transition-colors font-medium" href="#">Iniciar Sesión</a>
+</div>
+</nav>
+<main class="relative z-10 flex-grow flex flex-col items-center justify-center px-4 py-12">
+<div class="w-full max-w-md glass-card rounded-2xl p-8 sm:p-10 shadow-2xl">
+<div class="text-center mb-10">
+<div class="mx-auto w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-6 border border-primary/20">
+<span class="material-icons-round text-primary text-3xl">security</span>
+</div>
+<h1 class="text-3xl font-bold text-white mb-3 font-display tracking-tight">Crear Cuenta</h1>
+<p class="text-sm text-slate-400 leading-relaxed px-2">
+                    Registro seguro para operaciones de grado industrial y gestión de activos.
+                </p>
+</div>
+<form action="#" class="space-y-6" method="POST">
+<div class="space-y-2">
+<label class="block text-sm font-medium text-slate-300" for="email">
+                        Correo Corporativo
+                    </label>
+<div class="relative rounded-lg shadow-sm">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<span class="material-icons-round text-slate-500 text-lg">mail_outline</span>
+</div>
+<input class="block w-full pl-10 pr-3 py-3 industrial-input rounded-lg sm:text-sm transition-all duration-200" id="email" name="email" placeholder="nombre@empresa.com" type="email"/>
+</div>
+</div>
+<div class="space-y-2">
+<label class="block text-sm font-medium text-slate-300" for="password">
+                        Contraseña
+                    </label>
+<div class="relative rounded-lg shadow-sm">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<span class="material-icons-round text-slate-500 text-lg">lock_outline</span>
+</div>
+<input class="block w-full pl-10 pr-10 py-3 industrial-input rounded-lg sm:text-sm transition-all duration-200" id="password" name="password" placeholder="Crear una contraseña segura" type="password"/>
+<div class="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-slate-500 hover:text-slate-300 transition-colors">
+<span class="material-icons-round text-lg">visibility_off</span>
+</div>
+</div>
+</div>
+<div class="flex items-start">
+<div class="flex items-center h-5">
+<input class="h-4 w-4 text-primary border-slate-700 rounded bg-obsidian focus:ring-primary focus:ring-offset-panel cursor-pointer transition-colors" id="terms" name="terms" type="checkbox"/>
+</div>
+<div class="ml-3 text-xs leading-5">
+<label class="font-normal text-slate-400" for="terms">
+                            Acepto los <a class="text-primary hover:text-emerald-400 font-medium underline underline-offset-4" href="#">Términos de Servicio</a> y la <a class="text-primary hover:text-emerald-400 font-medium underline underline-offset-4" href="#">Política de Privacidad</a> de Validex UP.
+                        </label>
+</div>
+</div>
+<button class="w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-obsidian bg-primary hover:bg-emerald-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary focus:ring-offset-obsidian transition-all duration-200" type="submit">
+                    Crear Cuenta
+                    <span class="material-icons-round ml-2 text-lg">arrow_forward</span>
+</button>
+</form>
+</div>
+<div class="mt-16 text-center w-full max-w-2xl px-4">
+<p class="text-[10px] font-bold text-slate-500 mb-8 uppercase tracking-[0.2em] font-display">
+                Con la confianza de los líderes del sector de hidrocarburos
+            </p>
+<div class="flex flex-wrap justify-center items-center gap-10 sm:gap-16 opacity-40 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-700">
+<div class="flex items-center space-x-2">
+<span class="material-icons-round text-slate-400 text-2xl">water_drop</span>
+<span class="font-bold text-slate-400 text-sm tracking-widest font-display">REDPETROIL</span>
+</div>
+<div class="flex items-center space-x-2">
+<span class="material-icons-round text-slate-400 text-2xl">water_drop</span>
+<span class="font-bold text-slate-400 text-sm tracking-widest font-display">PEMEX</span>
+</div>
+<div class="flex items-center space-x-1">
+<div class="flex flex-col -space-y-1">
+<span class="material-icons-round text-slate-400 text-xs transform rotate-180">expand_more</span>
+<span class="material-icons-round text-slate-400 text-xs transform rotate-180">expand_more</span>
+</div>
+<span class="font-bold text-slate-400 text-sm tracking-widest font-display">CHEVRON</span>
+</div>
+</div>
+</div>
+</main>
+<footer class="relative z-10 w-full py-6 text-center">
+<p class="text-[10px] text-slate-600 font-medium tracking-widest uppercase">Protocolo de seguridad activo • Cifrado de grado militar</p>
+</footer>
+
+</body></html>

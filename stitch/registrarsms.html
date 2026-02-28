@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Validex UP - Registro de Teléfono</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#10b981", // Emerald 500 equivalent for the bright green accents
+                        "primary-hover": "#059669",
+                        "sidebar-light": "#1f2937", // Slate 800 roughly
+                        "sidebar-dark": "#1a2233", // Dark navy from screenshot
+                        "background-light": "#111827", // Gray 900
+                        "background-dark": "#0d1321", // Very dark navy/black from screenshot
+                        "input-bg": "#151d2e",
+                        "accent-text": "#34d399", // Lighter emerald for text accents
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"],
+                        sans: ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.5rem",
+                        'xl': '1rem',
+                        '2xl': '1.5rem',
+                    },
+                },
+            },
+        };
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0d1321; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #374151; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4b5563; 
+        }
+    </style>
+</head>
+<body class="h-screen w-screen overflow-hidden flex bg-background-light dark:bg-background-dark text-gray-300 antialiased selection:bg-primary selection:text-white">
+<aside class="w-full lg:w-[380px] xl:w-[450px] hidden lg:flex flex-col justify-between p-8 bg-sidebar-light dark:bg-sidebar-dark border-r border-gray-800 relative z-10 shrink-0">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-gray-800 flex items-center justify-center border border-gray-700">
+<span class="material-symbols-rounded text-primary text-2xl">verified_user</span>
+</div>
+<div class="text-xl font-bold text-white tracking-tight">
+                Validex <span class="text-primary">UP</span>
+</div>
+</div>
+<div class="flex flex-col gap-8">
+<div class="w-16 h-16 rounded-2xl bg-gray-800 flex items-center justify-center border border-gray-700 shadow-lg shadow-black/20">
+<span class="material-symbols-rounded text-primary text-3xl">admin_panel_settings</span>
+</div>
+<div>
+<h1 class="text-2xl font-bold text-white mb-4 leading-snug">
+                    Seguridad de Grado Corporativo
+                </h1>
+<p class="text-gray-400 text-sm leading-relaxed">
+                    Estamos configurando su entorno B2B. El registro de su número telefónico es esencial para la gobernanza de identidad y la prevención de fraudes.
+                </p>
+</div>
+<div class="flex flex-col gap-6 mt-2">
+<div class="flex gap-4">
+<span class="material-symbols-rounded text-primary mt-1 text-xl shrink-0">verified</span>
+<div>
+<h3 class="text-white font-semibold text-sm mb-1">Protección de Identidad</h3>
+<p class="text-gray-500 text-xs leading-relaxed">
+                            Vinculación biométrica y de dispositivo única por cada cuenta corporativa.
+                        </p>
+</div>
+</div>
+<div class="flex gap-4">
+<span class="material-symbols-rounded text-primary mt-1 text-xl shrink-0">account_tree</span>
+<div>
+<h3 class="text-white font-semibold text-sm mb-1">Control de Acceso (RBAC)</h3>
+<p class="text-gray-500 text-xs leading-relaxed">
+                            Niveles de acceso definidos por la estructura jerárquica de su organización.
+                        </p>
+</div>
+</div>
+</div>
+</div>
+<div class="text-xs text-gray-600">
+            © 2026 Secure Systems B2B. v3.1.0
+        </div>
+</aside>
+<main class="flex-1 flex flex-col relative w-full h-full overflow-y-auto bg-background-light dark:bg-background-dark">
+<div class="lg:hidden p-6 flex items-center justify-between border-b border-gray-800 bg-sidebar-light dark:bg-sidebar-dark">
+<div class="flex items-center gap-2">
+<span class="material-symbols-rounded text-primary text-xl">verified_user</span>
+<div class="font-bold text-white">Validex <span class="text-primary">UP</span></div>
+</div>
+</div>
+<div class="flex-1 flex items-center justify-center p-6 sm:p-12">
+<div class="w-full max-w-lg flex flex-col items-center">
+<div class="w-full flex items-center justify-between mb-16 relative">
+<div class="relative z-10 flex flex-col items-center gap-2">
+<div class="w-10 h-10 rounded-full border border-primary/30 bg-transparent flex items-center justify-center text-primary">
+<span class="material-symbols-rounded text-lg">fact_check</span>
+</div>
+<span class="text-[10px] font-bold tracking-wider text-primary uppercase">Registro</span>
+</div>
+<div class="h-[1px] bg-gradient-to-r from-primary/50 to-primary/50 flex-1 mx-2 -mt-6"></div>
+<div class="relative z-10 flex flex-col items-center gap-2">
+<div class="w-10 h-10 rounded-full bg-primary shadow-[0_0_15px_rgba(16,185,129,0.4)] flex items-center justify-center text-white relative">
+<span class="material-symbols-rounded text-lg">smartphone</span>
+</div>
+<span class="text-[10px] font-bold tracking-wider text-white uppercase">SMS</span>
+</div>
+<div class="h-[1px] bg-gray-700 flex-1 mx-2 -mt-6"></div>
+<div class="relative z-10 flex flex-col items-center gap-2">
+<div class="w-10 h-10 rounded-full border border-gray-700 bg-transparent flex items-center justify-center text-gray-500">
+<span class="material-symbols-rounded text-lg">face</span>
+</div>
+<span class="text-[10px] font-bold tracking-wider text-gray-600 uppercase">Cara</span>
+</div>
+</div>
+<div class="w-full text-center space-y-8">
+<div class="space-y-3">
+<h2 class="text-3xl sm:text-4xl font-bold text-white tracking-tight">
+                            Registro de Teléfono
+                        </h2>
+<p class="text-gray-400 text-sm sm:text-base max-w-md mx-auto leading-relaxed">
+                            Para continuar, necesitamos vincular un número de contacto corporativo a su perfil.
+                        </p>
+</div>
+<div class="w-full max-w-md mx-auto text-left space-y-2">
+<label class="text-[11px] uppercase tracking-wider font-bold text-gray-500 ml-1">
+                            Número de teléfono
+                        </label>
+<div class="flex gap-3">
+<div class="relative w-28 shrink-0">
+<select class="w-full h-12 bg-input-bg border border-gray-700 rounded-lg text-white px-3 appearance-none focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors cursor-pointer text-sm font-medium">
+<option>MX +52</option>
+<option>US +1</option>
+<option>ES +34</option>
+<option>AR +54</option>
+</select>
+<div class="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+<span class="material-symbols-rounded text-gray-500 text-sm">expand_more</span>
+</div>
+</div>
+<input class="flex-1 h-12 bg-input-bg border border-gray-700 rounded-lg text-white px-4 placeholder-gray-600 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors text-lg tracking-wide" placeholder="55 1234 5678" type="tel"/>
+</div>
+<p class="text-[11px] text-gray-500 mt-2 px-1">
+                            Se enviará un código de seguridad de un solo uso por SMS para validar la línea.
+                        </p>
+</div>
+<div class="w-full max-w-md mx-auto pt-4">
+<button class="w-full h-12 bg-primary hover:bg-primary-hover text-white font-semibold rounded-lg shadow-lg shadow-primary/20 transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2 group">
+<span>Enviar SMS de Verificación</span>
+<span class="material-symbols-rounded text-xl group-hover:translate-x-0.5 transition-transform">sms</span>
+</button>
+</div>
+<div class="pt-8">
+<a class="text-sm text-gray-600 hover:text-gray-400 transition-colors" href="#">
+                            ¿Por qué es necesario este paso?
+                        </a>
+</div>
+</div>
+</div>
+</div>
+</main>
+
+</body></html>

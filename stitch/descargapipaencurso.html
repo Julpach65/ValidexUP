@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Descarga en Proceso - Validex UP</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#10B981",
+                        "primary-dark": "#059669",
+                        "background-obsidian": "#0F172A",
+                        "panel-glass": "rgba(30, 41, 59, 0.8)",
+                        "border-industrial": "#334155",
+                    },
+                    fontFamily: {
+                        sans: ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.5rem",
+                        'xl': '0.75rem',
+                        '2xl': '1rem',
+                    },
+                },
+            },
+        };
+    </script>
+<style type="text/tailwindcss">
+        @layer base {
+            body {
+                @apply bg-background-obsidian text-slate-100 font-sans antialiased;
+            }
+        }
+        .glass-panel {
+            background-color: theme('colors.panel-glass');
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0F172A; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569; 
+        }
+        .progress-fill {
+            background: linear-gradient(90deg, #10B981 0%, #34D399 100%);
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col transition-colors duration-200">
+<nav class="bg-background-obsidian border-b border-industrial px-6 py-4">
+<div class="max-w-7xl mx-auto flex justify-between items-center">
+<div class="flex items-center space-x-3">
+<div class="w-10 h-10 bg-gradient-to-br from-green-900 to-green-600 rounded-lg flex items-center justify-center border border-green-500/30">
+<span class="material-symbols-outlined text-green-300" style="font-size: 24px;">verified_user</span>
+</div>
+<div class="text-xl font-bold text-white tracking-tight">
+                    Validex <span class="text-primary">UP</span>
+</div>
+</div>
+<div class="hidden md:flex space-x-8 items-center h-full">
+<a class="text-slate-400 hover:text-primary transition-colors text-sm font-medium" href="#">Dashboard</a>
+<div class="relative h-10 flex items-center">
+<a class="text-primary font-medium text-sm" href="#">Operaciones</a>
+<div class="absolute bottom-[-1.1rem] left-0 w-full h-0.5 bg-primary shadow-[0_0_8px_rgba(16,185,129,0.8)]"></div>
+</div>
+<a class="text-slate-400 hover:text-primary transition-colors text-sm font-medium" href="#">Accesos y descargas</a>
+</div>
+<div class="flex items-center space-x-6">
+<button class="text-slate-400 hover:text-white transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+</button>
+<div class="h-8 w-px bg-slate-700"></div>
+<div class="flex items-center space-x-3">
+<div class="text-right hidden sm:block">
+<p class="text-sm font-bold text-white leading-tight uppercase">EL NOYER</p>
+<p class="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">PATRON</p>
+</div>
+<div class="w-10 h-10 rounded-full bg-slate-700 overflow-hidden border border-slate-600">
+<img alt="User Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDpTZwv1apMxW9ZZvOBaj0FCrfhuqdLLKcMeOj5XbiIs9sd4SBQvAfCYiJdQRnEFq0enYHa_8zCreTFaq90u0wT5nMlVgnzorU_OG58Vb6LFiZRabFtTXM6PEXhRo0tcxU0joy_aIG4xSbuJ-ditCACmaxxhUlzEYhx4zxc1ehDSm3lk4eGieniM_-WscinmemhTTRTOxtAiwy7J2Cc045fnJlE-4Q0AN3CHl-__I0MT33il-Opf9u_w7i3RHgX8MPghCw8gJfPaIg"/>
+</div>
+</div>
+</div>
+</div>
+</nav>
+<main class="flex-grow p-6 md:p-8 lg:p-12">
+<div class="max-w-7xl mx-auto space-y-8">
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+<div>
+<div class="flex items-center space-x-2 mb-2">
+<span class="material-symbols-outlined text-primary text-sm">sync</span>
+<span class="text-primary text-xs font-bold tracking-wider uppercase">Operación en curso</span>
+</div>
+<h1 class="text-3xl md:text-4xl font-bold text-white mb-2">Descarga en Proceso</h1>
+<p class="text-slate-400 max-w-2xl text-sm md:text-base">
+                        La descarga de combustible de la unidad MX-8921 se encuentra activa. Monitoreo en tiempo real.
+                    </p>
+</div>
+<button class="bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-lg flex items-center gap-2 font-medium shadow-lg shadow-green-900/20 transition-all">
+<span class="material-symbols-outlined">print</span>
+                    Imprimir Ticket
+                </button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="glass-panel rounded-2xl p-6 relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-primary text-7xl">local_shipping</span>
+</div>
+<div class="flex items-center gap-3 mb-2 relative z-10">
+<div class="bg-blue-900/30 p-1.5 rounded text-blue-400">
+<span class="material-symbols-outlined text-lg">badge</span>
+</div>
+<span class="text-slate-400 text-sm font-medium">ID de Pipa</span>
+</div>
+<div class="text-3xl font-bold text-white mb-1 relative z-10">MX-8921</div>
+<div class="text-slate-500 text-sm relative z-10">Transportes del Norte S.A.</div>
+</div>
+<div class="glass-panel rounded-2xl p-6 relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-primary text-7xl">water_drop</span>
+</div>
+<div class="flex items-center gap-3 mb-2 relative z-10">
+<div class="bg-teal-900/30 p-1.5 rounded text-teal-400">
+<span class="material-symbols-outlined text-lg">propane</span>
+</div>
+<span class="text-slate-400 text-sm font-medium">Volumen Autorizado</span>
+</div>
+<div class="text-3xl font-bold text-white mb-1 relative z-10">15,000 L</div>
+<div class="text-primary text-sm flex items-center gap-1 relative z-10">
+<span class="material-symbols-outlined text-xs">trending_up</span> Capacidad Máxima
+                    </div>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<div class="lg:col-span-2 glass-panel rounded-2xl p-6 md:p-8">
+<div class="flex justify-between items-start mb-8">
+<div>
+<h2 class="text-xl font-bold text-white mb-1">Nivel de Llenado Objetivo</h2>
+<p class="text-slate-400 text-sm">Monitoreo en tiempo real de la carga autorizada</p>
+</div>
+<span class="bg-green-900/30 text-primary border border-green-800/50 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-2 uppercase">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+                            Descargando
+                        </span>
+</div>
+<div class="relative mb-10">
+<div class="h-12 w-full bg-slate-800/50 rounded-full overflow-hidden flex relative border border-slate-700/30">
+<div class="h-full progress-fill rounded-l-full relative" style="width: 65%;">
+<div class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white text-gray-900 font-bold px-2 py-0.5 rounded text-xs shadow-lg">
+                                    65%
+                                </div>
+</div>
+<div class="absolute top-0 left-1/4 h-full w-px bg-slate-700/30"></div>
+<div class="absolute top-0 left-2/4 h-full w-px bg-slate-700/30"></div>
+<div class="absolute top-0 left-3/4 h-full w-px bg-slate-700/30"></div>
+</div>
+<div class="flex justify-between mt-2 text-xs font-mono text-slate-500">
+<span>0 L</span>
+<span>3,750 L</span>
+<span>7,500 L</span>
+<span>11,250 L</span>
+<span>15,000 L</span>
+</div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<div class="glass-panel rounded-xl p-4 relative border border-slate-700/50">
+<div class="absolute top-4 right-4 w-2 h-2 rounded-full bg-green-500"></div>
+<p class="text-slate-400 text-sm mb-1">Presión de Bomba</p>
+<div class="flex items-baseline gap-1">
+<span class="text-2xl font-bold text-white">5.8</span>
+<span class="text-xs text-slate-500 font-bold uppercase">BAR</span>
+</div>
+</div>
+<div class="glass-panel rounded-xl p-4 relative border border-slate-700/50">
+<div class="absolute top-4 right-4 w-2 h-2 rounded-full bg-yellow-500"></div>
+<p class="text-slate-400 text-sm mb-1">Temperatura</p>
+<div class="flex items-baseline gap-1">
+<span class="text-2xl font-bold text-white">41</span>
+<span class="text-xs text-slate-500 font-bold uppercase">°C</span>
+</div>
+</div>
+</div>
+</div>
+<div class="glass-panel rounded-2xl flex flex-col h-full overflow-hidden">
+<div class="p-4 bg-slate-800/40 border-b border-slate-700/50 flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">security</span>
+<h3 class="font-bold text-white">Validación de Seguridad</h3>
+</div>
+<div class="flex-grow flex items-center justify-center p-6 bg-gradient-to-b from-transparent to-slate-900/20">
+<div class="relative w-32 h-32 flex items-center justify-center">
+<div class="absolute w-full h-full border-4 border-slate-700/30 rounded-full"></div>
+<div class="absolute w-3/4 h-3/4 border-4 border-primary/10 rounded-full animate-ping" style="animation-duration: 4s;"></div>
+<span class="material-symbols-outlined text-slate-700 text-6xl">fingerprint</span>
+</div>
+</div>
+<div class="p-6 bg-slate-800/40 border-t border-slate-700/50">
+<div class="flex items-start gap-3">
+<div class="mt-1 text-primary">
+<span class="material-symbols-outlined">check_circle</span>
+</div>
+<div>
+<h4 class="font-bold text-white text-sm mb-1">Token Biométrico</h4>
+<p class="text-xs text-slate-400 leading-relaxed">
+                                    Operación validada por el noyer por Reconocimiento facial a las 13:45:22 hrs.
+                                </p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<footer class="mt-auto px-6 py-8 border-t border-industrial bg-background-obsidian">
+<div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
+<div>
+                © 2026 Validex UP Todos los derechos reservados.
+            </div>
+<div class="flex items-center gap-6">
+<span>ID de Transacción: <span class="text-slate-300 font-mono">#TRX-9982-AB</span></span>
+<span>v1.0.0</span>
+</div>
+</div>
+</footer>
+
+</body></html>

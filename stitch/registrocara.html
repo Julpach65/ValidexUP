@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Validex UP - Registro de Rostro</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#00c2ff", // Cyan for buttons and accents
+                        secondary: "#00d68f", // Green for success/stepper
+                        "background-light": "#f3f4f6", // Fallback light
+                        "background-dark": "#0B1120", // Deep navy almost black
+                        "surface-dark": "#111827", // Slightly lighter navy
+                        "border-dark": "#1f2937",
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'glow': '0 0 20px rgba(0, 194, 255, 0.5)',
+                        'glow-green': '0 0 15px rgba(0, 214, 143, 0.4)',
+                    }
+                },
+            },
+        };
+    </script>
+<style>.corner-bracket {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-color: #00c2ff;
+            border-style: solid;
+            filter: drop-shadow(0 0 5px rgba(0, 194, 255, 0.8));
+        }
+        .top-left { border-width: 4px 0 0 4px; top: 20px; left: 20px; border-top-left-radius: 4px; }
+        .top-right { border-width: 4px 4px 0 0; top: 20px; right: 20px; border-top-right-radius: 4px; }
+        .bottom-left { border-width: 0 0 4px 4px; bottom: 20px; left: 20px; border-bottom-left-radius: 4px; }
+        .bottom-right { border-width: 0 4px 4px 0; bottom: 20px; right: 20px; border-bottom-right-radius: 4px; }
+        .scan-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(to right, transparent, #00c2ff, transparent);
+            animation: scan 3s infinite linear;
+            opacity: 0.5;
+        }
+        @keyframes scan {
+            0% { top: 10%; opacity: 0; }
+            10% { opacity: 0.8; }
+            90% { opacity: 0.8; }
+            100% { top: 90%; opacity: 0; }
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-[#080d1a] text-gray-800 dark:text-gray-200 font-sans min-h-screen flex flex-col transition-colors duration-300">
+<header class="w-full border-b border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-[#0b1221]/80 backdrop-blur-md sticky top-0 z-50">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-[#111d2e] border border-[#1f2f45] flex items-center justify-center text-secondary">
+<span class="material-icons-outlined text-xl">shield</span>
+</div>
+<div class="text-xl font-bold tracking-tight text-gray-900 dark:text-white">
+                    Validex <span class="text-primary">UP</span>
+</div>
+</div>
+<div class="hidden md:flex items-center flex-1 justify-center max-w-lg mx-auto">
+<div class="flex flex-col items-center relative group cursor-default">
+<div class="w-10 h-10 rounded-full border-2 border-secondary bg-[#0b1221] text-secondary flex items-center justify-center mb-1 shadow-glow-green">
+<span class="material-icons text-lg">verified_user</span>
+</div>
+<span class="text-[10px] font-semibold tracking-wider text-secondary uppercase absolute -bottom-5">Registro</span>
+</div>
+<div class="h-[2px] w-24 bg-secondary/30 mx-2 relative overflow-hidden">
+<div class="absolute inset-0 bg-secondary w-full"></div>
+</div>
+<div class="flex flex-col items-center relative group cursor-default">
+<div class="w-10 h-10 rounded-full border-2 border-secondary bg-[#0b1221] text-secondary flex items-center justify-center mb-1 shadow-glow-green">
+<span class="material-icons-outlined text-lg">smartphone</span>
+</div>
+<span class="text-[10px] font-semibold tracking-wider text-secondary uppercase absolute -bottom-5">SMS</span>
+</div>
+<div class="h-[2px] w-24 bg-secondary/30 mx-2 relative overflow-hidden">
+<div class="absolute inset-0 bg-secondary w-full"></div>
+</div>
+<div class="flex flex-col items-center relative group cursor-default">
+<div class="w-10 h-10 rounded-full border-2 border-secondary bg-secondary text-[#0b1221] flex items-center justify-center mb-1 shadow-glow-green animate-pulse">
+<span class="material-icons text-lg">face</span>
+</div>
+<span class="text-[10px] font-semibold tracking-wider text-gray-400 dark:text-gray-400 uppercase absolute -bottom-5">Cara</span>
+</div>
+</div>
+<div>
+<button class="px-5 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-[#1f2937] hover:bg-gray-300 dark:hover:bg-[#374151] transition-colors">
+                    Cancelar
+                </button>
+</div>
+</div>
+</header>
+<main class="flex-grow flex flex-col items-center justify-center px-4 py-8 sm:px-6 lg:px-8 relative">
+<div class="mb-6 inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-gray-300 dark:border-[#1e3a5f] bg-gray-100 dark:bg-[#0f1c30] text-blue-600 dark:text-blue-400 text-xs font-semibold tracking-wide uppercase">
+<span class="material-icons-outlined text-sm">schedule</span>
+            Configuración Inicial
+        </div>
+<div class="text-center mb-10 max-w-2xl">
+<h1 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-3">
+                Registro de Rostro
+            </h1>
+<p class="text-gray-600 dark:text-gray-400 text-sm sm:text-base leading-relaxed">
+                Posiciona tu rostro en el contorno y mantén la mirada firme. <br class="hidden sm:block"/> Esto completará tu registro.
+            </p>
+</div>
+<div class="relative w-full max-w-[500px] aspect-square bg-gray-900 dark:bg-black rounded-3xl overflow-hidden shadow-2xl border border-gray-800 dark:border-[#1f2937] mb-8 group">
+<img alt="Silueta de una persona en traje" class="w-full h-full object-cover opacity-40 mix-blend-overlay grayscale" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBWZgfoNg7R3UVJBniE0XELl9BixrrJ9bIgyQO-fPoqGLesEknPJW5fq-VBzONAlc4XoVFbtRl7urtMjq_jJEDP68uVShm6121UPoAjM1cKCcJZ8IDIlKzrpzyKn4qjC6nqvcMm-eV4Gz34ex_BOCG3iAcbpy0y_IUlNO_C9JoaRsNpxqktw8Bttbd5X2-EUp9b3xFhU6tf8t91in_uo2147dZvO8DS1yhc3hRLd96agsBxQyOerWbuUMxF7EAh_koJ7Fjd9z0bZOKs"/>
+<div class="absolute inset-0 bg-gradient-to-b from-black/80 via-transparent to-black/80"></div>
+<div class="corner-bracket top-left"></div>
+<div class="corner-bracket top-right"></div>
+<div class="corner-bracket bottom-left"></div>
+<div class="corner-bracket bottom-right"></div>
+<div class="scan-line"></div>
+<div class="absolute top-6 left-1/2 -translate-x-1/2 px-3 py-1 bg-black/60 backdrop-blur-sm rounded-full border border-gray-700 flex items-center gap-2 z-10">
+<div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+<span class="text-[10px] font-bold tracking-widest text-primary uppercase">En Vivo</span>
+</div>
+<div class="absolute bottom-10 left-1/2 -translate-x-1/2 z-10">
+<div class="flex items-center gap-2 px-4 py-2 bg-primary/20 backdrop-blur-md border border-primary/50 rounded-full shadow-glow">
+<span class="material-icons text-primary text-sm">face_retouching_natural</span>
+<span class="text-xs font-semibold text-primary">Rostro en Posición Correcta</span>
+</div>
+</div>
+</div>
+<div class="w-full max-w-[500px] mb-8">
+<button class="w-full relative group overflow-hidden rounded-xl bg-primary hover:bg-[#00b3eb] transition-all duration-300 shadow-lg shadow-primary/25">
+<div class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+<div class="py-4 flex items-center justify-center gap-2 text-white font-bold text-lg">
+<span class="material-icons-outlined">camera_alt</span>
+                    Confirmar Registro Facial
+                </div>
+</button>
+</div>
+<div class="flex items-center gap-6 text-sm font-medium text-gray-500 dark:text-gray-400">
+<a class="flex items-center gap-2 hover:text-primary transition-colors" href="#">
+<span class="material-icons-outlined text-lg">settings</span>
+                Configuración
+            </a>
+<div class="h-4 w-px bg-gray-300 dark:bg-gray-700"></div>
+<a class="flex items-center gap-2 hover:text-primary transition-colors" href="#">
+<span class="material-icons-outlined text-lg">help_outline</span>
+                Ayuda
+            </a>
+</div>
+</main>
+<footer class="py-6 text-center border-t border-transparent dark:border-transparent mt-auto">
+<div class="flex items-center justify-center gap-2 text-xs text-gray-400 dark:text-gray-500">
+<span class="material-icons-outlined text-sm">lock</span>
+            Cifrado de extremo a extremo • Conexión Segura
+        </div>
+</footer>
+
+</body></html>
