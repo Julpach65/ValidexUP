@@ -19,9 +19,9 @@ def login_access_token(
     form_data: OAuth2PasswordRequestForm = Depends()
 ) -> Any:
     """
-    OAuth2 compatible token login, requiere username (email) y password.
+    OAuth2 compatible token login, requiere username y password.
     """
-    statement = select(Usuario).where(Usuario.email == form_data.username)
+    statement = select(Usuario).where(Usuario.username == form_data.username)
     user = session.exec(statement).first()
     
     if not user or not security.verify_password(form_data.password, user.password_hash):
@@ -33,7 +33,7 @@ def login_access_token(
         
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = security.create_access_token(
-        subject=user.id, expires_delta=access_token_expires
+        subject=user.id_usuario, expires_delta=access_token_expires
     )
     
     return {"access_token": access_token, "token_type": "bearer"}
@@ -45,21 +45,23 @@ def register_user(
     """
     Registra a un nuevo usuario (Gerente o Patrón).
     """
-    statement = select(Usuario).where(Usuario.email == user_in.email)
+    statement = select(Usuario).where(Usuario.username == user_in.username)
     user = session.exec(statement).first()
     
     if user:
         raise HTTPException(
             status_code=400,
-            detail="El correo ya se encuentra registrado en el sistema.",
+            detail="El nombre de usuario ya se encuentra registrado.",
         )
         
     # Crear y hashear
     hashed_password = security.get_password_hash(user_in.password)
     db_user = Usuario(
-        email=user_in.email,
+        nombre_completo=user_in.nombre_completo,
+        username=user_in.username,
         password_hash=hashed_password,
-        rol=user_in.rol
+        rol=user_in.rol,
+        telefono=user_in.telefono
     )
     
     session.add(db_user)
