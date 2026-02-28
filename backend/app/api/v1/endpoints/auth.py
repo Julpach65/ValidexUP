@@ -4,6 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session, select
 
+# Importamos las funciones del archivo sms.py
+from app.core.sms import enviar_codigo_verificacion, validar_codigo_verificacion 
+
 from app.core.config import settings
 from app.core import security
 from app.core.db import get_session
@@ -43,7 +46,7 @@ def register_user(
     *, session: Session = Depends(get_session), user_in: UsuarioCreate
 ) -> Any:
     """
-    Registra a un nuevo usuario (Gerente o Patrón).
+    Registra a un nuevo usuario (Gerente).
     """
     statement = select(Usuario).where(Usuario.username == user_in.username)
     user = session.exec(statement).first()
@@ -54,7 +57,6 @@ def register_user(
             detail="El nombre de usuario ya se encuentra registrado.",
         )
         
-    # Crear y hashear
     hashed_password = security.get_password_hash(user_in.password)
     db_user = Usuario(
         nombre_completo=user_in.nombre_completo,
@@ -64,8 +66,46 @@ def register_user(
         telefono=user_in.telefono
     )
     
+    # 1. Guardamos en la base de datos MySQL
     session.add(db_user)
     session.commit()
     session.refresh(db_user)
     
+    # 2. Disparamos el código de verificación (Real o Mock)
+    if db_user.telefono:
+        enviar_codigo_verificacion(db_user.telefono)
+    
     return db_user
+
+# --- ESTA ES LA RUTA QUE FALTABA PARA CERRAR EL CICLO ---
+@router.post("/verify-otp")
+def verify_otp(
+    telefono: str, 
+    codigo: str, 
+    session: Session = Depends(get_session)
+) -> Any:
+    """
+    Verifica el código enviado al celular para validar al usuario.
+    """
+    # 1. Validamos el código usando tu lógica de sms.py
+    es_valido = validar_codigo_verificacion(telefono, codigo)
+    
+    if not es_valido:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Código de verificación incorrecto o expirado."
+        )
+    
+    # 2. Si el código es correcto, buscamos al usuario por su teléfono
+    statement = select(Usuario).where(Usuario.telefono == telefono)
+    user = session.exec(statement).first()
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado.")
+    
+    # Aquí puedes marcar al usuario como verificado en la DB si tienes el campo
+    # user.esta_verificado = True
+    # session.add(user)
+    # session.commit()
+    
+    return {"msg": "Verificación exitosa", "status": "approved"}
