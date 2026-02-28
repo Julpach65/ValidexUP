@@ -68,7 +68,7 @@ export default function ValidacionSmsFallida() {
                 </div>
 
                 <div className="flex gap-4 w-full max-w-sm mb-6">
-                    <Link href="/registro-sms" className="flex-1 bg-gradient-to-r from-red-500 to-red-400 hover:from-red-600 hover:to-red-500 text-white font-semibold py-4 px-6 rounded-xl shadow-[0_0_15px_rgba(239,68,68,0.5)] transform transition hover:scale-[1.02] flex items-center justify-center space-x-2">
+                    <Link href="/verificar-sms" className="flex-1 bg-gradient-to-r from-red-500 to-red-400 hover:from-red-600 hover:to-red-500 text-white font-semibold py-4 px-6 rounded-xl shadow-[0_0_15px_rgba(239,68,68,0.5)] transform transition hover:scale-[1.02] flex items-center justify-center space-x-2">
                         <span className="material-icons-outlined">refresh</span>
                         <span>Reintentar</span>
                     </Link>

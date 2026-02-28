@@ -21,7 +21,7 @@ export default function SignupPage() {
         // Simulating signup flow
         setTimeout(() => {
             setIsLoading(false);
-            router.push('/registro-sms'); // Luego de crear, va al SMS
+            router.push('/verificar-sms'); // Luego de crear, va al SMS
         }, 1500);
     };
 

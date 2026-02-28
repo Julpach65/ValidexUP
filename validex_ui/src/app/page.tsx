@@ -20,7 +20,7 @@ export default function LoginPage() {
     // Simulating authentication flow
     setTimeout(() => {
       setIsLoading(false);
-      router.push('/registro-sms'); // Siguiente paso del onboarding
+      router.push('/verificar-sms'); // Siguiente paso del onboarding
     }, 1500);
   };
 
