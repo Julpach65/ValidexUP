@@ -20,6 +20,8 @@ class Settings(BaseSettings):
     TWILIO_AUTH_TOKEN: Optional[str] = None
     TWILIO_VERIFY_SERVICE_SID: Optional[str] = None
     MOCK_SMS: bool = True
+    TWILIO_PHONE_NUMBER: Optional[str] = None  
+    DEBUG_MODE: bool = True
 
     class Config:
 
