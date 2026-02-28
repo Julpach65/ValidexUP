@@ -11,6 +11,7 @@ from app.core.config import settings
 from app.core import security
 from app.core.db import get_session
 from app.models.usuarios import Usuario
+from app.models.sesiones import Sesion
 from app.schemas.user import UsuarioCreate, UsuarioOut
 from app.schemas.token import Token
 
@@ -103,9 +104,16 @@ def verify_otp(
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado.")
     
-    # Aquí puedes marcar al usuario como verificado en la DB si tienes el campo
-    # user.esta_verificado = True
-    # session.add(user)
-    # session.commit()
+    # 3. Registrar o actualizar la sesión activa
+    statement = select(Sesion).where(Sesion.id_usuario == user.id_usuario)
+    sesion_activa = session.exec(statement).first()
     
-    return {"msg": "Verificación exitosa", "status": "approved"}
+    if not sesion_activa:
+        sesion_activa = Sesion(id_usuario=user.id_usuario, paso_1_login=True)
+        session.add(sesion_activa)
+        
+    sesion_activa.paso_2_sms = True
+    session.add(sesion_activa)
+    session.commit()
+    
+    return {"msg": "Verificación exitosa", "status": "approved", "paso_2_sms": True}
