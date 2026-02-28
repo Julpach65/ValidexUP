@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: oklch(0.72 0.17 153.33);
+  /* Emerald 500 equivalent */
+  --color-primary-hover: oklch(0.64 0.17 153.33);
+  --color-background-custom: oklch(0.18 0.03 258.89);
+  /* Slate 900 equivalent */
+}
+
+@layer base {
+  body {
+    @apply bg-slate-900 text-slate-300 antialiased;
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+@layer utilities {
+  .glass-panel {
+    @apply bg-slate-800/50 backdrop-blur-md border border-slate-700 shadow-xl;
+  }
+
+  .text-glow-primary {
+    text-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+  }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0F172A;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
