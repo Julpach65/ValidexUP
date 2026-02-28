@@ -6,25 +6,28 @@ class Settings(BaseSettings):
     VERSION: str = "1.0.0"
     API_V1_STR: str = "/api/v1"
     
-    # Security Configuration
+    # Configuración de Seguridad
     SECRET_KEY: str = "validex-super-secret-key-for-development-only-change-in-prod"
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7 # 7 days for development
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7 
     
-    # Database Configuration (MySQL)
-    # Ejemplo local: mysql+pymysql://usuario:password@localhost:3306/validex_db
-    DATABASE_URL: str = "mysql+pymysql://root:password@localhost:3306/validex_db"
+    # Configuración de Base de Datos (MySQL)
+    # Ajustado a tu puerto 3306 y nombre de DB 'ValidexDB'
+    DATABASE_URL: str = "mysql+pymysql://root:123456@localhost:3306/ValidexDB"
     
-    # Twilio Configuration (Postergado para Fase 2)
-    TWILIO_ACCOUNT_SID: Optional[str] = None
-    TWILIO_AUTH_TOKEN: Optional[str] = None
-    TWILIO_VERIFY_SERVICE_SID: Optional[str] = None
+    # Configuración de Twilio
+    # Quitamos el Optional para que Pydantic valide que los datos existen en el .env
+    TWILIO_ACCOUNT_SID: str 
+    TWILIO_AUTH_TOKEN: str 
+    TWILIO_VERIFY_SERVICE_SID: str 
+    
+    # Número de pruebas verificado en tu cuenta
+    MY_VERIFIED_NUMBER: str = "+526692686003"
+    
     MOCK_SMS: bool = True
-    TWILIO_PHONE_NUMBER: Optional[str] = None  
     DEBUG_MODE: bool = True
 
     class Config:
-
         env_file = ".env"
         case_sensitive = True
 
