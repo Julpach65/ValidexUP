@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+sqlmodel
+pymysql
+cryptography
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
+twilio
+pydantic-settings
+alembic
+email-validator
+
