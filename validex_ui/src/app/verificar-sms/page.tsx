@@ -242,7 +242,8 @@ export default function RegisterSMSPage() {
                             </div>
                         </div>
                     </div>
-                )            </main>
+                )}
+            </main>
         </div>
     );
 }
