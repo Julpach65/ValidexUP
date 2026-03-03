@@ -6,9 +6,9 @@ import { APP_INFO } from '@/data/mockData';
 export default function Sidebar() {
     return (
         <aside className="w-full lg:w-[380px] xl:w-[450px] hidden lg:flex flex-col justify-between p-8 bg-slate-800 border-r border-slate-700 relative z-10 shrink-0">
-            <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-slate-900 flex items-center justify-center border border-slate-700">
-                    <Shield className="text-emerald-500 w-6 h-6" />
+            <div className="flex items-center gap-4 mb-2">
+                <div className="w-12 h-12 flex items-center justify-center">
+                    <img src="/logo-v2.png" alt="Validex Logo" className="w-full h-full object-contain" />
                 </div>
                 <div className="text-xl font-bold text-white tracking-tight">
                     {APP_INFO.name} <span className="text-emerald-500">{APP_INFO.suffix}</span>

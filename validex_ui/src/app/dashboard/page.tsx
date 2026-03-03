@@ -4,54 +4,25 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { Truck, FileText, Bell, Shield, LogOut } from 'lucide-react';
 import { APP_INFO, USER_MOCK } from '@/data/mockData';
+import AppHeader from '@/components/layout/AppHeader';
 
 export default function DashboardPage() {
     const router = useRouter();
 
     return (
-        <div className="bg-[#0f172a] min-h-screen font-sans text-slate-200">
+        <div className="min-h-screen bg-[#0B1120] flex flex-col relative overflow-hidden">
+            {/* Background glow accent similar to Pipas */}
+            <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[#10b981]/5 rounded-full blur-[120px] pointer-events-none" />
 
-            {/* Header Minimalista */}
-            <header className="w-full border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-50">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
-                            <Shield className="w-5 h-5" />
-                        </div>
-                        <div className="text-xl font-bold tracking-tight text-white">
-                            {APP_INFO.name} <span className="text-emerald-500">UP</span>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-6">
-                        <div className="hidden md:flex flex-col items-end mr-2">
-                            <span className="text-sm font-bold text-white tracking-wide">{USER_MOCK.name}</span>
-                            <span className="text-[10px] uppercase font-bold text-emerald-500 tracking-wider bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                                {USER_MOCK.role}
-                            </span>
-                        </div>
-                        <img src={USER_MOCK.avatar} alt="User Avatar" className="w-10 h-10 rounded-full border-2 border-slate-700 hidden md:block" />
-
-                        <button className="relative w-10 h-10 rounded-full hover:bg-slate-800 flex items-center justify-center transition-colors text-slate-400 hover:text-emerald-500">
-                            <Bell className="w-5 h-5" />
-                            <span className="absolute top-2 right-2 w-2 h-2 bg-emerald-500 rounded-full border border-slate-900"></span>
-                        </button>
-                        <div className="h-6 w-px bg-slate-800 hidden md:block"></div>
-                        <button
-                            onClick={() => router.push('/')}
-                            className="text-slate-500 hover:text-red-400 transition-colors hidden md:flex items-center gap-2 text-sm font-medium"
-                        >
-                            <LogOut className="w-4 h-4" /> Salir
-                        </button>
-                    </div>
-                </div>
-            </header>
+            <AppHeader />
 
             {/* Main Content Hub */}
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
+            <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-16 w-full relative z-10">
                 <div className="mb-12">
-                    <h1 className="text-3xl font-bold text-white mb-2">Centro de Control Táctico</h1>
-                    <p className="text-slate-400">Seleccione el módulo operativo para continuar.</p>
+                    <h1 className="text-4xl font-black text-white tracking-tight leading-none uppercase">
+                        Gestión de módulos <br />
+                        Validex <span className="text-[#10b981]">UP</span>
+                    </h1>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
@@ -70,7 +41,7 @@ export default function DashboardPage() {
                             Autorización biométrica para descarga de tanques, monitoreo de volumen y asignación.
                         </p>
                         <div className="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transform translate-x-4 group-hover:translate-x-0 transition-all duration-300 text-emerald-500 z-10">
-                            <span className="material-icons-rounded">arrow_forward</span>
+                            <span className="material-icons-round">arrow_forward</span>
                         </div>
                     </button>
 
@@ -88,17 +59,17 @@ export default function DashboardPage() {
                             Registro inmutable de accesos, intentos denegados y autorizaciones despachadas.
                         </p>
                         <div className="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transform translate-x-4 group-hover:translate-x-0 transition-all duration-300 text-blue-400 z-10">
-                            <span className="material-icons-rounded">arrow_forward</span>
+                            <span className="material-icons-round">arrow_forward</span>
                         </div>
                     </button>
 
                 </div>
             </main>
 
-            <footer className="w-full py-6 text-center border-t border-slate-800 mt-auto bg-slate-900/50">
-                <p className="text-xs text-slate-500 font-medium tracking-wide">
-                    SISTEMA DE AUTORIZACIÓN ZERO-TRUST • VERSIÓN DE PRODUCCIÓN
-                </p>
+            <footer className="mt-auto border-t border-gray-800 bg-[#0d121d] py-6 relative z-10">
+                <div className="max-w-7xl mx-auto px-4 text-center">
+                    <p className="text-[10px] text-slate-500 font-bold tracking-[0.4em] uppercase">Validex UP © 2026. Todos los derechos reservados.</p>
+                </div>
             </footer>
         </div>
     );

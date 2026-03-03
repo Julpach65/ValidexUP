@@ -1,155 +1,181 @@
-'use client';
+'use client'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import AppHeader from '@/components/layout/AppHeader'
+import GaugeCircle from '@/components/ui/GaugeCircle'
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Shield, ArrowLeft, Truck, AlertTriangle, Fingerprint, Lock } from 'lucide-react';
-import { APP_INFO, PIPAS_MOCK } from '@/data/mockData';
-import { Button } from '@/components/ui/Button';
+const PIPAS = [
+    { id: 'MX-8921', empresa: 'Transportes del Norte S.A.', capacidad: 15000, disponible: 9500, status: 'Disponible' },
+    { id: 'MX-7734', empresa: 'Flota Central Mx', capacidad: 12000, disponible: 12000, status: 'Disponible' },
+    { id: 'MX-5501', empresa: 'Logística Sur', capacidad: 18000, disponible: 7200, status: 'En Espera' },
+]
 
 export default function PipasPage() {
-    const router = useRouter();
-    const [selectedPipa, setSelectedPipa] = useState(PIPAS_MOCK[0].id);
-    const [litros, setLitros] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
+    const router = useRouter()
+    const [selectedPipa, setSelectedPipa] = useState(PIPAS[0])
+    const [volumen, setVolumen] = useState('')
+    const [loading, setLoading] = useState(false)
 
-    const activePipa = PIPAS_MOCK.find(p => p.id === selectedPipa) || PIPAS_MOCK[0];
-    const fillPercentage = (activePipa.actual / activePipa.capacidad) * 100;
+    const fillPercent = Math.round(((selectedPipa.capacidad - selectedPipa.disponible) / selectedPipa.capacidad) * 100)
 
-    const handleAuthorize = (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsLoading(true);
-        setTimeout(() => {
-            setIsLoading(false);
-            router.push('/dashboard');
-        }, 2000);
-    };
+    const handleAutorizar = async (e: React.FormEvent) => {
+        e.preventDefault()
+        setLoading(true)
+        await new Promise(r => setTimeout(r, 1500))
+        router.push('/pipas/descarga-en-curso')
+    }
 
     return (
-        <div className="bg-[#0f172a] min-h-screen font-sans text-slate-200">
+        <div className="min-h-screen bg-[#0B1120] flex flex-col relative overflow-hidden">
+            {/* Background glow accent */}
+            <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[#10b981]/5 rounded-full blur-[120px] pointer-events-none" />
 
-            <header className="w-full border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-50">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <button onClick={() => router.push('/dashboard')} className="p-2 -ml-2 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">
-                            <ArrowLeft className="w-5 h-5" />
-                        </button>
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
-                                <Truck className="w-5 h-5" />
-                            </div>
-                            <div className="hidden sm:block text-xl font-bold tracking-tight text-white">
-                                Gestión de <span className="text-emerald-500">Pipas</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-500 text-xs font-bold tracking-wide">
-                        <Lock className="w-4 h-4" /> Auth Biométrico Requerido
-                    </div>
-                </div>
-            </header>
+            <AppHeader />
 
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-white mb-2">Autorización de Descarga</h1>
-                    <p className="text-slate-400">Selecciona el ID del transporte y la cantidad de litros a despachar.</p>
+            <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full relative z-10">
+
+                {/* Navigation Breadcrumb-like */}
+                <button onClick={() => router.push('/dashboard')} className="group inline-flex items-center text-[10px] font-black text-slate-500 hover:text-[#10B981] tracking-[0.2em] uppercase transition-colors mb-10">
+                    <span className="material-icons-outlined text-sm mr-2 group-hover:-translate-x-1 transition-transform">arrow_back</span>
+                    VOLVER AL CENTRO DE CONTROL
+                </button>
+
+                {/* Page Header */}
+                <div className="mb-10">
+                    <div className="flex items-center gap-2 mb-3">
+                        <span className="material-icons-outlined text-[#10B981] text-xl">local_shipping</span>
+                        <span className="text-[#10B981] font-black text-[10px] tracking-[0.3em] uppercase">MÓDULO DE OPERACIONES</span>
+                    </div>
+                    <h1 className="text-4xl font-black text-white tracking-tight leading-none uppercase">Autorización <br /> de <span className="text-[#10b981]">Unidad</span></h1>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                    {/* Formulario Lateral */}
-                    <div className="lg:col-span-7 space-y-6">
-                        <form onSubmit={handleAuthorize} className="glass-panel rounded-2xl p-6 sm:p-8 space-y-8">
 
-                            <div className="space-y-4">
-                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Identificador de Pipa</label>
-                                <select
-                                    className="w-full h-14 bg-slate-900 border border-slate-700 rounded-xl text-white px-4 appearance-none focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-lg font-medium cursor-pointer"
-                                    value={selectedPipa}
-                                    onChange={(e) => setSelectedPipa(e.target.value)}
-                                >
-                                    {PIPAS_MOCK.map((pipa) => (
-                                        <option key={pipa.id} value={pipa.id}>{pipa.id} - Cap. {pipa.capacidad.toLocaleString()} L</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div className="space-y-4">
-                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Litros a Descargar</label>
-                                <div className="relative">
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        max={activePipa.capacidad - activePipa.actual}
-                                        value={litros}
-                                        onChange={(e) => setLitros(e.target.value)}
-                                        required
-                                        className="w-full h-16 bg-slate-900 border border-slate-700 rounded-xl text-emerald-500 px-6 text-3xl font-bold placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                                        placeholder="0.00"
-                                    />
-                                    <div className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-500 font-bold">Lts</div>
-                                </div>
-
-                                {Number(litros) > (activePipa.capacidad - activePipa.actual) && (
-                                    <div className="flex items-start gap-2 text-red-400 text-sm mt-2 p-3 bg-red-400/10 rounded-lg">
-                                        <AlertTriangle className="w-5 h-5 shrink-0" />
-                                        <p>El volumen ingresado excede la capacidad disponible de la pipa seleccionada.</p>
-                                    </div>
+                    {/* List Section (4 cols) */}
+                    <div className="lg:col-span-4 space-y-4">
+                        <h2 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-4">Unidades Autorizadas</h2>
+                        {PIPAS.map(p => (
+                            <button
+                                key={p.id}
+                                id={`pipa-${p.id}`}
+                                onClick={() => setSelectedPipa(p)}
+                                className={`w-full text-left p-5 rounded-2xl border transition-all duration-300 relative overflow-hidden group ${selectedPipa.id === p.id
+                                    ? 'bg-[#10B981]/10 border-[#10B981]/40 shadow-glow-emerald'
+                                    : 'bg-[#151e32] border-white/5 hover:border-white/10'
+                                    }`}
+                            >
+                                {selectedPipa.id === p.id && (
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-[#10b981] opacity-[0.05] rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
                                 )}
-                            </div>
-
-                            <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-5 flex items-start gap-4">
-                                <Fingerprint className="w-6 h-6 text-emerald-500 shrink-0 mt-1" />
-                                <div>
-                                    <h4 className="text-white font-semibold mb-1">Firma de Responsabilidad</h4>
-                                    <p className="text-slate-400 text-xs leading-relaxed">
-                                        Esta acción quedará registrada en la bitácora criptográfica e inmutable.
-                                        Confirmar iniciará el proceso de reconocimiento facial como firma digital.
-                                    </p>
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className={`text-xl font-black tracking-tight ${selectedPipa.id === p.id ? 'text-[#10B981]' : 'text-white'}`}>{p.id}</span>
+                                    <span className={`text-[9px] font-black px-2.5 py-1 rounded border uppercase tracking-widest ${selectedPipa.id === p.id ? 'bg-[#10B981]/20 border-[#10B981]/30 text-[#10B981]' : 'bg-slate-800 border-slate-700 text-slate-500'
+                                        }`}>
+                                        {p.status}
+                                    </span>
                                 </div>
-                            </div>
-
-                            <Button type="submit" size="lg" fullWidth isLoading={isLoading} className="mt-8 shadow-[0_0_20px_rgba(16,185,129,0.3)]">
-                                Autorizar Transacción
-                            </Button>
-                        </form>
+                                <p className="text-xs text-slate-400 font-medium mb-3">{p.empresa}</p>
+                                <div className="flex items-center justify-between text-[10px] font-bold text-slate-600 tracking-wider">
+                                    <span>CAPACIDAD</span>
+                                    <span className="text-slate-300">{p.capacidad.toLocaleString()} L</span>
+                                </div>
+                            </button>
+                        ))}
                     </div>
 
-                    {/* Panel Visual (Gauge) */}
-                    <div className="lg:col-span-5 relative">
-                        <div className="sticky top-28 glass-panel rounded-2xl p-6 sm:p-8 flex flex-col items-center justify-center min-h-[400px]">
-                            <div className="text-center mb-8">
-                                <h3 className="text-white font-bold text-xl">{activePipa.id}</h3>
-                                <p className="text-slate-400 text-sm uppercase tracking-wide">Estado de Carga</p>
+                    {/* Interactive Authorization Section (8 cols) */}
+                    <div className="lg:col-span-8 space-y-8">
+                        {/* Visual HUD Card */}
+                        <div className="glass-card bg-[#151e32]/90 border-white/5 p-8 flex flex-col md:flex-row items-center gap-10">
+                            <div className="relative group">
+                                <div className="absolute inset-0 bg-[#10b981] rounded-full blur-3xl opacity-10 group-hover:opacity-20 transition-opacity"></div>
+                                <GaugeCircle
+                                    value={fillPercent}
+                                    maxLabel={`${selectedPipa.capacidad.toLocaleString()} L`}
+                                    currentLabel={`${fillPercent}%`}
+                                />
                             </div>
-
-                            {/* Custom Gauge */}
-                            <div className="relative w-48 h-48 rounded-full border-[6px] border-slate-800 flex items-center justify-center shadow-inner">
-                                {/* Pseudo-gauge fill - for visual purposes */}
-                                <div className="absolute inset-0 rounded-full border-[6px] border-emerald-500" style={{ clipPath: `polygon(0 100%, 100% 100%, 100% ${100 - fillPercentage}%, 0 ${100 - fillPercentage}%)` }}></div>
-
-                                <div className="flex flex-col items-center z-10">
-                                    <span className="text-4xl font-black text-white">{fillPercentage.toFixed(1)}%</span>
+                            <div className="flex-1 space-y-6">
+                                <div>
+                                    <h2 className="text-3xl font-black text-white tracking-tight uppercase mb-1">{selectedPipa.id}</h2>
+                                    <p className="text-slate-400 font-bold text-sm tracking-wide">{selectedPipa.empresa}</p>
                                 </div>
-                            </div>
-
-                            <div className="mt-10 w-full space-y-3">
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-slate-500 font-medium">Capacidad Total</span>
-                                    <span className="text-white font-bold">{activePipa.capacidad.toLocaleString()} Lts</span>
-                                </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-slate-500 font-medium">Volumen Actual</span>
-                                    <span className="text-emerald-500 font-bold">{activePipa.actual.toLocaleString()} Lts</span>
-                                </div>
-                                <div className="flex justify-between text-sm border-t border-slate-700 pt-3">
-                                    <span className="text-slate-400 font-medium">Bolsa Disponible</span>
-                                    <span className="text-white font-bold">{(activePipa.capacidad - activePipa.actual).toLocaleString()} Lts</span>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="bg-slate-900/50 p-4 rounded-xl border border-white/5">
+                                        <p className="text-[10px] text-slate-600 font-bold uppercase mb-1">Disponible</p>
+                                        <p className="text-xl font-black text-[#10B981]">{selectedPipa.disponible.toLocaleString()} L</p>
+                                    </div>
+                                    <div className="bg-slate-900/50 p-4 rounded-xl border border-white/5">
+                                        <p className="text-[10px] text-slate-600 font-bold uppercase mb-1">Nivel Actual</p>
+                                        <p className="text-xl font-black text-white">{fillPercent}%</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
+                        {/* Form Card */}
+                        <div className="glass-card bg-[#151e32]/90 border-white/5 p-8">
+                            <div className="flex items-center gap-3 mb-8">
+                                <span className="material-icons-outlined text-[#10B981]">assignment_turned_in</span>
+                                <h3 className="text-lg font-black text-white uppercase tracking-wider">Autorización de Carga</h3>
+                            </div>
+
+                            <form onSubmit={handleAutorizar} className="space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-500 tracking-[0.2em] uppercase">Unidad Confirmada</label>
+                                        <div className="relative">
+                                            <span className="material-icons-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-lg">local_shipping</span>
+                                            <input
+                                                type="text"
+                                                value={selectedPipa.id}
+                                                readOnly
+                                                className="w-full bg-[#0f1623] border border-white/10 rounded-xl pl-12 pr-4 py-4 text-white text-sm font-black opacity-50 cursor-not-allowed"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-500 tracking-[0.2em] uppercase">Volumen a Cargar (L)</label>
+                                        <div className="relative group">
+                                            <span className="material-icons-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-lg group-focus-within:text-[#10B981] transition-colors">water_drop</span>
+                                            <input
+                                                id="auth-volumen"
+                                                type="number"
+                                                required
+                                                min="1"
+                                                max={selectedPipa.disponible}
+                                                value={volumen}
+                                                onChange={e => setVolumen(e.target.value)}
+                                                placeholder={`MÁX. ${selectedPipa.disponible.toLocaleString()}`}
+                                                className="w-full bg-[#0f1623] border border-white/10 rounded-xl pl-12 pr-4 py-4 text-white placeholder-slate-600 focus:outline-none focus:border-[#10B981] focus:ring-1 focus:ring-[#10B981] text-sm font-black transition-all"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button
+                                    id="auth-submit"
+                                    type="submit"
+                                    disabled={loading || !volumen}
+                                    className="w-full py-5 bg-[#10B981] hover:bg-emerald-600 text-white font-black rounded-full shadow-glow-emerald transition-all transform hover:scale-[1.01] active:scale-95 flex items-center justify-center gap-3 disabled:opacity-40 btn-glow"
+                                >
+                                    {loading ? (
+                                        <><span className="material-symbols-outlined text-xl animate-spin">sync</span> PROCESANDO AUDITORÍA...</>
+                                    ) : (
+                                        <>AUTORIZAR OPERACIÓN</>
+                                    )}
+                                </button>
+                            </form>
+                        </div>
+                    </div>
                 </div>
             </main>
+
+            <footer className="mt-auto border-t border-gray-800 bg-[#0d121d] py-6">
+                <div className="max-w-7xl mx-auto px-4 text-center">
+                    <p className="text-xs text-slate-500 font-bold tracking-[0.4em] uppercase">Validex UP © 2026. Todos los derechos reservados.</p>
+                </div>
+            </footer>
         </div>
-    );
+    )
 }

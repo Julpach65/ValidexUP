@@ -1,111 +1,135 @@
-'use client';
-
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Shield, Mail, Lock } from 'lucide-react';
-import { APP_INFO } from '@/data/mockData';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import Sidebar from '@/components/layout/Sidebar';
+'use client'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
-  const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('secretpassword')
+  const [showPassword, setShowPassword] = useState(false)
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    // Simulating authentication flow
-    setTimeout(() => {
-      setIsLoading(false);
-      router.push('/registro-sms'); // Siguiente paso del onboarding
-    }, 1500);
-  };
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    // En el diseño original, el login redirige a verificar-sms
+    router.push('/verificar-sms')
+  }
 
   return (
-    <div className="h-screen w-screen overflow-hidden flex bg-slate-900">
-      <Sidebar />
+    <div className="min-h-screen flex flex-col relative overflow-hidden bg-[#0B1120]">
+      {/* Glow Background Gradient */}
+      <div className="absolute inset-0 z-0 bg-glow-gradient"></div>
 
-      <main className="flex-1 flex flex-col relative w-full h-full overflow-y-auto">
-        {/* Mobile Header */}
-        <div className="lg:hidden p-6 flex items-center justify-between border-b border-slate-800 bg-slate-800/80 backdrop-blur">
-          <div className="flex items-center gap-2">
-            <Shield className="text-emerald-500 w-6 h-6" />
-            <div className="font-bold text-white">
-              {APP_INFO.name} <span className="text-emerald-500">{APP_INFO.suffix}</span>
-            </div>
+      {/* Official Header */}
+      <header className="w-full px-6 py-6 flex justify-between items-center relative z-10">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 flex items-center justify-center">
+            <img src="/logo-v2.png" alt="Validex UP Logo" className="w-full h-full object-contain" />
           </div>
+          <h1 className="text-xl font-bold tracking-tight text-white">
+            Validex <span className="text-[#10b981]">UP</span>
+          </h1>
         </div>
+        <button className="px-5 py-2 rounded-full bg-slate-800 border border-slate-700 hover:bg-slate-700 text-sm font-medium text-slate-300 transition-all shadow-sm">
+          Soporte
+        </button>
+      </header>
 
-        {/* Login Form Container */}
-        <div className="flex-1 flex items-center justify-center p-6 sm:p-12 relative z-10">
-          <div className="glass-panel w-full max-w-md rounded-2xl p-8 sm:p-10">
-            <div className="text-center mb-10">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-500/10 mb-4 border border-emerald-500/20">
-                <Shield className="text-emerald-500 w-8 h-8" />
+      {/* Main Login Card */}
+      <main className="flex-grow flex items-center justify-center px-4 relative z-10">
+        <div className="w-full max-w-md glass-card p-8 sm:p-10 transform transition-all hover:scale-[1.005]">
+          <div className="flex flex-col items-center text-center mb-8">
+            <div className="w-14 h-14 rounded-full bg-[#10b981]/10 flex items-center justify-center mb-5 ring-1 ring-[#10b981]/20">
+              <span className="material-icons-outlined text-[#10b981] text-3xl">face</span>
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-2 tracking-tight">Acceso Seguro al Portal</h2>
+            <p className="text-slate-400 text-sm leading-relaxed max-w-xs mx-auto">
+              Ingresa tus credenciales para acceder al entorno Zero-Trust de Validex UP.
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Email Field */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-slate-300" htmlFor="email">
+                Correo Electrónico
+              </label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <span className="material-icons-outlined text-slate-500 group-focus-within:text-[#10b981] transition-colors">mail</span>
+                </div>
+                <input
+                  className="block w-full pl-10 pr-3 py-3 bg-[#0f1623] border border-slate-700 rounded-lg text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-[#10b981] focus:border-transparent transition-all sm:text-sm"
+                  id="email"
+                  type="email"
+                  placeholder="usuario@validex.com"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
               </div>
-              <h2 className="text-3xl font-bold text-white tracking-tight mb-2">
-                Acceso Táctico
-              </h2>
-              <p className="text-slate-400 text-sm">
-                Ingrese sus credenciales de nivel corporativo para continuar.
-              </p>
             </div>
 
-            <form onSubmit={handleLogin} className="space-y-6">
-              <Input
-                label="Correo Electrónico Corporativo"
-                type="email"
-                placeholder="gerencia@compania.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                icon={<Mail className="w-5 h-5" />}
-                required
-              />
-
-              <Input
-                label="Clave de Identidad (Password)"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                icon={<Lock className="w-5 h-5" />}
-                required
-              />
-
-              <div className="flex items-center justify-between text-sm mt-2">
-                <div className="flex items-center gap-2">
-                  <input type="checkbox" id="remember" className="rounded border-slate-700 bg-slate-800 text-emerald-500 focus:ring-emerald-500" />
-                  <label htmlFor="remember" className="text-slate-400 select-none cursor-pointer">Mantener sesión</label>
+            {/* Password Field */}
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <label className="block text-sm font-medium text-slate-300" htmlFor="password">
+                  Contraseña
+                </label>
+                <a className="text-xs font-medium text-[#10b981] hover:text-emerald-400 transition-colors" href="#">
+                  ¿Olvidaste tu contraseña?
+                </a>
+              </div>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <span className="material-icons-outlined text-slate-500 group-focus-within:text-[#10b981] transition-colors">lock</span>
                 </div>
-                <button type="button" className="text-emerald-500 hover:text-emerald-400 font-medium">
-                  ¿Extravió sus claves?
+                <input
+                  className="block w-full pl-10 pr-10 py-3 bg-[#0f1623] border border-slate-700 rounded-lg text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-[#10b981] focus:border-transparent transition-all sm:text-sm tracking-widest"
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer z-10"
+                >
+                  <span className="material-icons-outlined text-slate-500 hover:text-[#10b981] transition-colors">
+                    {showPassword ? "visibility" : "visibility_off"}
+                  </span>
                 </button>
               </div>
-
-              <div className="pt-4">
-                <Button type="submit" fullWidth isLoading={isLoading}>
-                  Autorizar Acceso
-                </Button>
-              </div>
-            </form>
-
-            <div className="mt-8 text-center text-sm text-slate-400 border-t border-slate-700/50 pt-6">
-              ¿Nueva incorporación logística?{' '}
-              <button onClick={() => router.push('/crear-cuenta')} className="text-emerald-500 hover:text-emerald-400 font-semibold transition-colors">
-                Solicite Enrolamiento
-              </button>
             </div>
+
+            <button
+              id="login-submit"
+              type="submit"
+              className="w-full flex justify-center items-center gap-2 py-3.5 px-4 border border-transparent rounded-full shadow-glow-emerald text-sm font-bold text-white bg-[#10b981] hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-[#10b981] transition-all duration-200 btn-glow mt-4"
+            >
+              Iniciar Sesión
+              <span className="material-icons-outlined text-lg">arrow_forward</span>
+            </button>
+          </form>
+
+          {/* Create Account Link (not in original html but added for UX) */}
+          <div className="mt-8 text-center">
+            <p className="text-sm text-slate-500">
+              ¿No tienes cuenta?{' '}
+              <button onClick={() => router.push('/crear-cuenta')} className="text-[#10b981] font-bold hover:underline">
+                Crear cuenta
+              </button>
+            </p>
           </div>
         </div>
-
-        {/* Decorative Grid Background */}
-        <div className="absolute inset-0 z-0 pointer-events-none opacity-20"
-          style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.15) 1px, transparent 0)', backgroundSize: '32px 32px' }}>
-        </div>
       </main>
+
+      <footer className="w-full py-8 text-center relative z-10">
+        <p className="text-xs text-slate-600 font-medium tracking-wide">
+          Validex UP © 2026. Todos los derechos reservados.
+        </p>
+      </footer>
     </div>
-  );
+  )
 }

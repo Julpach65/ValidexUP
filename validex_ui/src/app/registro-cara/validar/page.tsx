@@ -1,9 +1,23 @@
 'use client'
 import { useRouter } from 'next/navigation'
-import OnboardingHeader from '@/components/layout/OnboardingHeader'
+import { useEffect, useState } from 'react'
 
-export default function RegistroCaraPage() {
+export default function ValidarCaraPage() {
     const router = useRouter()
+    const [progress, setProgress] = useState(0)
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setProgress(prev => {
+                if (prev >= 100) {
+                    clearInterval(interval)
+                    return 100
+                }
+                return prev + 5
+            })
+        }, 100)
+        return () => clearInterval(interval)
+    }, [])
 
     return (
         <div className="min-h-screen flex flex-col bg-[#0B1120] text-slate-300 font-sans selection:bg-[#10B981] selection:text-white">
@@ -18,7 +32,7 @@ export default function RegistroCaraPage() {
                     position: absolute;
                     width: 40px;
                     height: 40px;
-                    border-color: rgba(255, 255, 255, 0.5);
+                    border-color: #10B981;
                     border-style: solid;
                     pointer-events: none;
                 }
@@ -28,7 +42,7 @@ export default function RegistroCaraPage() {
                 .corner-br { bottom: 20px; right: 20px; border-width: 0 3px 3px 0; border-bottom-right-radius: 4px; }
             `}</style>
 
-            {/* Header based on registrocara.html */}
+            {/* Header matches Stitch */}
             <header className="w-full px-6 py-6 border-b border-white/5 flex flex-col md:flex-row items-center justify-between relative z-20 bg-[#0B111D]/80 backdrop-blur-xl">
                 <div className="flex items-center space-x-3 cursor-pointer mb-8 md:mb-0" onClick={() => router.push('/')}>
                     <div className="w-10 h-10 flex items-center justify-center">
@@ -39,7 +53,7 @@ export default function RegistroCaraPage() {
                     </div>
                 </div>
 
-                {/* Unified Stepper (Cara Active) */}
+                {/* Unified Stepper (Cara Active - Validando) */}
                 <div className="w-full max-w-md relative">
                     <div className="flex items-center justify-between relative">
                         <div className="absolute top-1/2 left-0 w-full h-0.5 bg-[#10B981]/20 -z-10 transform -translate-y-1/2"></div>
@@ -66,21 +80,18 @@ export default function RegistroCaraPage() {
                         {/* Progress Line 2 */}
                         <div className="absolute top-1/2 left-[50%] w-[35%] h-0.5 bg-[#10B981]/50 -z-10 transform -translate-y-1/2 shadow-[0_0_8px_rgba(16,185,129,0.3)]"></div>
 
-                        {/* Step 3: Cara (Active) */}
+                        {/* Step 3: Cara (Active Validating) */}
                         <div className="flex flex-col items-center gap-2 relative bg-[#0B111D] px-3">
-                            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/4 w-14 h-14 bg-[#10B981]/25 rounded-full blur-xl animate-pulse"></div>
-                            <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#10B981] to-emerald-600 text-white flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.4)] border-2 border-[#10B981]/20 relative z-10">
-                                <span className="material-icons-round text-xl">face</span>
+                            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/4 w-14 h-14 bg-blue-500/25 rounded-full blur-xl animate-pulse"></div>
+                            <div className="w-11 h-11 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-[0_0_20px_rgba(59,130,246,0.5)] border-2 border-blue-500/20 relative z-10">
+                                <span className="material-icons-round text-xl animate-spin-slow">sync</span>
                             </div>
-                            <span className="text-[9px] font-black tracking-[0.2em] text-white uppercase mt-1">Cara</span>
+                            <span className="text-[9px] font-black tracking-[0.2em] text-blue-400 uppercase mt-1">Validando</span>
                         </div>
                     </div>
                 </div>
 
-                <button
-                    onClick={() => router.push('/')}
-                    className="hidden md:flex px-5 py-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 text-slate-300 text-[10px] font-black tracking-widest uppercase transition-colors border border-slate-700"
-                >
+                <button onClick={() => router.push('/')} className="hidden md:flex px-5 py-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 text-slate-300 text-[10px] font-black tracking-widest uppercase transition-colors border border-slate-700">
                     Cancelar
                 </button>
             </header>
@@ -93,63 +104,54 @@ export default function RegistroCaraPage() {
                         </div>
                         <div className="space-y-3">
                             <h1 className="text-3xl md:text-5xl font-bold text-white tracking-tight leading-tight">
-                                Captura de Foto de Referencia Biométrica
+                                Validando Foto de Referencia
                             </h1>
                             <p className="text-slate-400 text-lg font-light max-w-xl mx-auto leading-relaxed">
-                                Posiciona tu rostro dentro del círculo y mira a la cámara para iniciar el registro
+                                Procesando rasgos biométricos. Por favor, mantenga la posición.
                             </p>
                         </div>
                     </div>
 
                     <div className="relative w-full max-w-[560px]">
                         <div className="w-full aspect-[4/3] bg-black rounded-3xl overflow-hidden relative shadow-2xl border border-slate-700/50 flex items-center justify-center">
-                            {/* Placeholder for camera preview with grain effect */}
-                            <div className="absolute inset-0 bg-slate-900/50 flex items-center justify-center">
-                                <span className="material-icons-outlined text-slate-700 text-9xl">face</span>
+                            {/* Scanning indicator */}
+                            <div className="absolute inset-0 bg-slate-900/40 flex items-center justify-center">
+                                <div className="w-48 h-48 border-2 border-[#10B981]/30 rounded-full flex items-center justify-center bg-[#10B981]/5">
+                                    <span className="material-icons-round text-[#10B981] text-6xl animate-pulse">radar</span>
+                                </div>
                             </div>
-
-                            <div className="absolute inset-0 bg-radial-gradient(circle, transparent 30%, rgba(15, 23, 42, 0.7) 100%) pointer-events-none"></div>
 
                             <div className="absolute top-6 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1 bg-black/60 backdrop-blur-md rounded-full border border-white/10">
                                 <span className="w-2 h-2 rounded-full bg-[#10B981] shadow-[0_0_8px_#10B981] animate-pulse"></span>
-                                <span className="text-[10px] font-bold tracking-widest text-white/90 uppercase">En Vivo</span>
+                                <span className="text-[10px] font-bold tracking-widest text-white/90 uppercase">Validando</span>
                             </div>
 
-                            <div className="corner-border corner-tl"></div>
-                            <div className="corner-border corner-tr"></div>
-                            <div className="corner-border corner-bl"></div>
-                            <div className="corner-border corner-br"></div>
+                            <div className="corner-border corner-tl !border-[#10B981]"></div>
+                            <div className="corner-border corner-tr !border-[#10B981]"></div>
+                            <div className="corner-border corner-bl !border-[#10B981]"></div>
+                            <div className="corner-border corner-br !border-[#10B981]"></div>
 
                             {/* Scanning Animation Line */}
-                            <div className="absolute left-0 w-full h-0.5 bg-[#10B981]/50 shadow-[0_0_10px_#10B981] animate-scan-line pointer-events-none"></div>
-
-                            <button className="absolute bottom-16 flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-full text-white text-sm font-medium transition-all shadow-lg">
-                                <span className="material-icons-round text-lg">center_focus_strong</span>
-                                Ajusta tu posición
-                            </button>
+                            <div className="absolute left-0 w-full h-1 bg-[#10B981] shadow-[0_0_20px_#10B981] animate-scan-line pointer-events-none"></div>
                         </div>
                     </div>
 
-                    <div className="pt-4 w-full md:w-auto">
-                        <button
-                            onClick={() => router.push('/registro-cara/validar')}
-                            className="group relative inline-flex items-center gap-3 px-10 py-5 bg-gradient-to-br from-[#10B981] to-[#059669] hover:from-[#34D399] hover:to-[#10B981] rounded-2xl text-white font-bold text-lg shadow-[0_8px_30px_rgba(16,185,129,0.3)] transition-all hover:-translate-y-1 active:translate-y-0 w-full md:min-w-[340px] justify-center"
-                        >
-                            <span className="material-icons-round text-2xl">photo_camera</span>
-                            <span>Capturar Foto de Referencia</span>
-                        </button>
+                    {/* Progress Bar from Stitch design style */}
+                    <div className="w-full max-w-md space-y-4">
+                        <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
+                            <div
+                                className="h-full bg-[#10B981] shadow-[0_0_15px_rgba(16,185,129,0.5)] transition-all duration-300"
+                                style={{ width: `${progress}%` }}
+                            ></div>
+                        </div>
+                        <p className="text-xs font-bold tracking-[0.2em] text-[#10B981] animate-pulse">
+                            COMPARANDO RASGOS BIOMÉTRICOS... {progress}%
+                        </p>
                     </div>
 
-                    <div className="flex items-center gap-6 text-sm text-slate-500 pt-2 font-medium">
-                        <button className="flex items-center gap-2 hover:text-[#10B981] transition-colors">
-                            <span className="material-icons-outlined text-lg">settings</span>
-                            Configuración
-                        </button>
-                        <span className="text-slate-700">|</span>
-                        <button className="flex items-center gap-2 hover:text-[#10B981] transition-colors">
-                            <span className="material-icons-outlined text-lg">help_outline</span>
-                            Ayuda
-                        </button>
+                    <div className="flex gap-4 pt-4">
+                        <button onClick={() => router.push('/registro-cara/valido')} className="px-6 py-2 bg-[#10B981]/20 border border-[#10B981]/30 text-[#10B981] rounded-full text-xs font-bold hover:bg-[#10B981] hover:text-white transition-all uppercase">Simular Éxito</button>
+                        <button onClick={() => router.push('/registro-cara/fallido')} className="px-6 py-2 bg-red-500/10 border border-red-500/30 text-red-500 rounded-full text-xs font-bold hover:bg-red-500 hover:text-white transition-all uppercase">Simular Fallo</button>
                     </div>
                 </div>
             </main>
@@ -157,7 +159,7 @@ export default function RegistroCaraPage() {
             <footer className="w-full py-8 text-center mt-auto">
                 <div className="inline-flex items-center gap-2 text-xs text-slate-500/80 uppercase tracking-widest font-semibold cursor-default">
                     <span className="material-icons-outlined text-[14px]">lock</span>
-                    <span>Cifrado de extremo a extremo • 2FA Activado</span>
+                    <span>Procesamiento en Tiempo Real • Neural Engine V.4</span>
                 </div>
             </footer>
         </div>
