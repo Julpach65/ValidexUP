@@ -38,97 +38,102 @@ export default function CrearCuentaPage() {
 
             {/* Main Card */}
             <main className="flex-grow flex items-center justify-center px-4 py-12 relative z-10">
-                <div className="w-full max-w-md glass-card p-8 sm:p-10 transform transition-all hover:scale-[1.002]">
-                    <div className="flex flex-col items-center text-center mb-8">
-                        <div className="w-14 h-14 rounded-full bg-[#10b981]/10 flex items-center justify-center mb-5 ring-1 ring-[#10b981]/20">
-                            <span className="material-icons-outlined text-[#10b981] text-3xl">person_add</span>
-                        </div>
-                        <h2 className="text-2xl font-bold text-white mb-2 tracking-tight">Crea tu Cuenta</h2>
-                        <p className="text-slate-400 text-sm leading-relaxed max-w-xs mx-auto">
-                            Regístrate para comenzar el proceso de verificación biométrica de Validex UP.
-                        </p>
-                    </div>
+                <div className="relative">
+                    <div className="premium-glow absolute -top-20 -left-20 scale-150 opacity-70"></div>
+                    <div className="premium-glow absolute -bottom-20 -right-20 scale-150 opacity-40"></div>
 
-                    <form onSubmit={handleSubmit} className="space-y-5">
-                        {/* Nombre Completo */}
-                        <div className="space-y-2">
-                            <label className="block text-sm font-medium text-slate-300">Nombre Completo</label>
-                            <div className="relative group">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <span className="material-icons-outlined text-slate-500 group-focus-within:text-[#10b981] transition-colors">badge</span>
-                                </div>
-                                <input
-                                    className="block w-full pl-10 pr-3 py-3 bg-[#0f1623] border border-slate-700 rounded-lg text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-[#10b981] focus:border-transparent transition-all sm:text-sm"
-                                    placeholder="Ej. Juan Pérez"
-                                    required
-                                    type="text"
-                                    value={formData.nombre}
-                                    onChange={e => setFormData({ ...formData, nombre: e.target.value })}
-                                />
+                    <div className="w-full max-w-md glass-card p-8 sm:p-10 transform transition-all hover:scale-[1.002] relative z-10">
+                        <div className="flex flex-col items-center text-center mb-8">
+                            <div className="w-14 h-14 rounded-full bg-[#10b981]/10 flex items-center justify-center mb-5 ring-1 ring-[#10b981]/20">
+                                <span className="material-icons-outlined text-[#10b981] text-3xl">person_add</span>
                             </div>
+                            <h2 className="text-2xl font-bold text-white mb-2 tracking-tight">Crea tu Cuenta</h2>
+                            <p className="text-slate-400 text-sm leading-relaxed max-w-xs mx-auto">
+                                Regístrate para comenzar el proceso de verificación biométrica de Validex UP.
+                            </p>
                         </div>
 
-                        {/* Email */}
-                        <div className="space-y-2">
-                            <label className="block text-sm font-medium text-slate-300">Correo Electrónico</label>
-                            <div className="relative group">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <span className="material-icons-outlined text-slate-500 group-focus-within:text-[#10b981] transition-colors">mail</span>
+                        <form onSubmit={handleSubmit} className="space-y-5">
+                            {/* Nombre Completo */}
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-slate-300">Nombre Completo</label>
+                                <div className="relative group">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span className="material-icons-outlined text-slate-500 group-focus-within:text-[#10b981] transition-colors">badge</span>
+                                    </div>
+                                    <input
+                                        className="block w-full pl-10 pr-3 py-3 bg-[#0f1623] border border-slate-700 rounded-lg text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-[#10b981] focus:border-transparent transition-all sm:text-sm"
+                                        placeholder="Ej. Juan Pérez"
+                                        required
+                                        type="text"
+                                        value={formData.nombre}
+                                        onChange={e => setFormData({ ...formData, nombre: e.target.value })}
+                                    />
                                 </div>
-                                <input
-                                    className="block w-full pl-10 pr-3 py-3 bg-[#0f1623] border border-slate-700 rounded-lg text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-[#10b981] focus:border-transparent transition-all sm:text-sm"
-                                    placeholder="usuario@validex.com"
-                                    required
-                                    type="email"
-                                    value={formData.email}
-                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                />
                             </div>
-                        </div>
 
-                        {/* Contraseña */}
-                        <div className="space-y-2">
-                            <label className="block text-sm font-medium text-slate-300">Contraseña</label>
-                            <div className="relative group">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <span className="material-icons-outlined text-slate-500 group-focus-within:text-[#10b981] transition-colors">lock</span>
+                            {/* Email */}
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-slate-300">Correo Electrónico</label>
+                                <div className="relative group">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span className="material-icons-outlined text-slate-500 group-focus-within:text-[#10b981] transition-colors">mail</span>
+                                    </div>
+                                    <input
+                                        className="block w-full pl-10 pr-3 py-3 bg-[#0f1623] border border-slate-700 rounded-lg text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-[#10b981] focus:border-transparent transition-all sm:text-sm"
+                                        placeholder="usuario@validex.com"
+                                        required
+                                        type="email"
+                                        value={formData.email}
+                                        onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                    />
                                 </div>
-                                <input
-                                    className="block w-full pl-10 pr-10 py-3 bg-[#0f1623] border border-slate-700 rounded-lg text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-[#10b981] focus:border-transparent transition-all sm:text-sm tracking-widest"
-                                    required
-                                    type={showPassword ? 'text' : 'password'}
-                                    value={formData.password}
-                                    onChange={e => setFormData({ ...formData, password: e.target.value })}
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer z-10"
-                                >
-                                    <span className="material-icons-outlined text-slate-500 hover:text-[#10b981] transition-colors">
-                                        {showPassword ? "visibility" : "visibility_off"}
-                                    </span>
-                                </button>
                             </div>
-                        </div>
 
-                        <button
-                            id="signup-submit"
-                            type="submit"
-                            className="w-full flex justify-center items-center gap-2 py-3.5 px-4 border border-transparent rounded-full shadow-glow-emerald text-sm font-bold text-white bg-[#10b981] hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-[#10b981] transition-all duration-200 btn-glow mt-4"
-                        >
-                            Registrarse ahora
-                            <span className="material-icons-outlined text-lg">arrow_forward</span>
-                        </button>
-                    </form>
+                            {/* Contraseña */}
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-slate-300">Contraseña</label>
+                                <div className="relative group">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span className="material-icons-outlined text-slate-500 group-focus-within:text-[#10b981] transition-colors">lock</span>
+                                    </div>
+                                    <input
+                                        className="block w-full pl-10 pr-10 py-3 bg-[#0f1623] border border-slate-700 rounded-lg text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-[#10b981] focus:border-transparent transition-all sm:text-sm tracking-widest"
+                                        required
+                                        type={showPassword ? 'text' : 'password'}
+                                        value={formData.password}
+                                        onChange={e => setFormData({ ...formData, password: e.target.value })}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer z-10"
+                                    >
+                                        <span className="material-icons-outlined text-slate-500 hover:text-[#10b981] transition-colors">
+                                            {showPassword ? "visibility" : "visibility_off"}
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
 
-                    <div className="mt-8 text-center">
-                        <p className="text-sm text-slate-500">
-                            ¿Ya tienes cuenta?{' '}
-                            <button onClick={() => router.push('/')} className="text-[#10b981] font-bold hover:underline">
-                                Inicia sesión
+                            <button
+                                id="signup-submit"
+                                type="submit"
+                                className="w-full flex justify-center items-center gap-2 py-3.5 px-4 border border-transparent rounded-full shadow-glow-emerald text-sm font-bold text-white bg-[#10b981] hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-[#10b981] transition-all duration-200 btn-glow mt-4"
+                            >
+                                Registrarse ahora
+                                <span className="material-icons-outlined text-lg">arrow_forward</span>
                             </button>
-                        </p>
+                        </form>
+
+                        <div className="mt-8 text-center">
+                            <p className="text-sm text-slate-500">
+                                ¿Ya tienes cuenta?{' '}
+                                <button onClick={() => router.push('/')} className="text-[#10b981] font-bold hover:underline">
+                                    Inicia sesión
+                                </button>
+                            </p>
+                        </div>
                     </div>
                 </div>
             </main>
