@@ -1,144 +1,149 @@
 <!DOCTYPE html>
-<html lang="es"><head>
+<html class="dark" lang="es"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Biometric Reference Photo Capture V2 - Validex UP</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<title>Verificación Facial Exitosa - Validex UP</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#10b981", // High intensity Emerald Green
+                        "background-obsidian": "#050505", // Stark obsidian background
+                        "surface-obsidian": "#0f0f0f", // Deep secondary surface
+                        "accent-green": "#22c55e",
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.5rem",
+                    },
+                    boxShadow: {
+                        'glow': '0 0 25px rgba(16, 185, 129, 0.4)',
+                        'glow-strong': '0 0 40px rgba(16, 185, 129, 0.6)',
+                        'card-inner': 'inset 0 0 30px rgba(0,0,0,0.8)',
+                    }
+                },
+            },
+        };
+    </script>
 <style type="text/tailwindcss">
-        :root {
-            --obsidian: #0F172A;
-            --panel: #1E293B;
-            --emerald: #10B981;
-        }
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--obsidian);
+            background-color: #050505;
         }
-        h1, h2, h3, .font-title {
-            font-family: 'Space Grotesk', sans-serif;
-        }
-        .glass-panel {
-            background-color: rgba(30, 41, 59, 0.8);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .corner-border {
+        .scan-corner {
             position: absolute;
             width: 40px;
             height: 40px;
-            border-color: rgba(255, 255, 255, 0.5);
-            border-style: solid;
-            pointer-events: none;
+            border-color: #10b981;
+            filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.6));
         }
-        .corner-tl { top: 20px; left: 20px; border-width: 3px 0 0 3px; border-top-left-radius: 4px; }
-        .corner-tr { top: 20px; right: 20px; border-width: 3px 3px 0 0; border-top-right-radius: 4px; }
-        .corner-bl { bottom: 20px; left: 20px; border-width: 0 0 3px 3px; border-bottom-left-radius: 4px; }
-        .corner-br { bottom: 20px; right: 20px; border-width: 0 3px 3px 0; border-bottom-right-radius: 4px; }
-        .active-step-line {
-            background-color: var(--emerald);
+        .scan-corner-tl { top: 20px; left: 20px; border-top-width: 4px; border-left-width: 4px; border-top-left-radius: 12px; }
+        .scan-corner-tr { top: 20px; right: 20px; border-top-width: 4px; border-right-width: 4px; border-top-right-radius: 12px; }
+        .scan-corner-bl { bottom: 20px; left: 20px; border-bottom-width: 4px; border-left-width: 4px; border-bottom-left-radius: 12px; }
+        .scan-corner-br { bottom: 20px; right: 20px; border-bottom-width: 4px; border-right-width: 4px; border-bottom-right-radius: 12px; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
     </style>
 </head>
-<body class="min-h-screen text-slate-300 flex flex-col selection:bg-[var(--emerald)] selection:text-white">
-<header class="w-full glass-panel px-6 py-4 flex items-center justify-between sticky top-0 z-50">
+<body class="bg-background-obsidian text-gray-100 min-h-screen flex flex-col font-display antialiased">
+<header class="w-full px-6 py-4 flex items-center justify-between border-b border-white/5 bg-background-obsidian/80 backdrop-blur-md sticky top-0 z-30">
 <div class="flex items-center gap-3">
-<div class="w-10 h-10 rounded-xl bg-slate-900 border border-slate-700 flex items-center justify-center text-[var(--emerald)] shadow-[0_0_15px_rgba(16,185,129,0.2)]">
-<span class="material-symbols-outlined">verified_user</span>
+<div class="w-10 h-10 rounded-full bg-zinc-900 flex items-center justify-center border border-white/10">
+<span class="material-symbols-outlined text-primary text-xl">security</span>
 </div>
-<div class="text-xl font-bold tracking-tight font-title">
-<span class="text-white">Validex</span>
-<span class="text-[var(--emerald)]">UP</span>
+<span class="text-xl font-bold tracking-tight text-white">Validex <span class="text-primary">UP</span></span>
 </div>
+<div class="hidden md:flex items-center gap-4">
+<div class="flex flex-col items-center gap-1">
+<div class="w-10 h-10 rounded-full border-2 border-primary flex items-center justify-center text-primary bg-primary/10">
+<span class="material-symbols-outlined text-sm">shield</span>
 </div>
-<div class="hidden md:flex items-center gap-4 flex-1 justify-center max-w-2xl mx-auto">
-<div class="flex flex-col items-center gap-1 group">
-<div class="w-10 h-10 rounded-full border-2 border-[var(--emerald)] flex items-center justify-center bg-[var(--emerald)]/10 text-[var(--emerald)]">
-<span class="material-symbols-outlined text-lg">check</span>
+<span class="text-[10px] uppercase font-bold tracking-wider text-primary">Registro</span>
 </div>
-<span class="text-[10px] uppercase font-bold tracking-widest text-[var(--emerald)]">Registro</span>
+<div class="w-24 h-[2px] bg-primary mb-5"></div>
+<div class="flex flex-col items-center gap-1">
+<div class="w-10 h-10 rounded-full border-2 border-primary flex items-center justify-center text-primary bg-primary/10">
+<span class="material-symbols-outlined text-sm">smartphone</span>
 </div>
-<div class="h-[2px] flex-1 active-step-line rounded-full mx-2"></div>
-<div class="flex flex-col items-center gap-1 group">
-<div class="w-10 h-10 rounded-full border-2 border-[var(--emerald)] flex items-center justify-center bg-[var(--emerald)]/10 text-[var(--emerald)]">
-<span class="material-symbols-outlined text-lg">smartphone</span>
+<span class="text-[10px] uppercase font-bold tracking-wider text-primary">SMS</span>
 </div>
-<span class="text-[10px] uppercase font-bold tracking-widest text-[var(--emerald)]">SMS</span>
+<div class="w-24 h-[2px] bg-primary mb-5"></div>
+<div class="flex flex-col items-center gap-1">
+<div class="w-10 h-10 rounded-full border-2 border-primary flex items-center justify-center text-primary bg-primary/10">
+<span class="material-symbols-outlined text-sm">face</span>
 </div>
-<div class="h-[2px] flex-1 active-step-line rounded-full mx-2"></div>
-<div class="flex flex-col items-center gap-1 group">
-<div class="w-10 h-10 rounded-full border-2 border-[var(--emerald)] flex items-center justify-center bg-[var(--emerald)]/10 text-[var(--emerald)] shadow-[0_0_15px_rgba(16,185,129,0.3)]">
-<span class="material-symbols-outlined text-lg">face</span>
-</div>
-<span class="text-[10px] uppercase font-bold tracking-widest text-[var(--emerald)]">Cara</span>
+<span class="text-[10px] uppercase font-bold tracking-wider text-primary">Cara</span>
 </div>
 </div>
 <div>
-<button class="px-5 py-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 text-slate-300 text-sm font-medium transition-colors border border-slate-700">
+<button class="px-5 py-2 text-sm font-medium text-gray-300 bg-white/5 hover:bg-white/10 rounded-lg transition-all border border-white/10">
             Cancelar
         </button>
 </div>
 </header>
-<main class="flex-1 flex flex-col items-center justify-center px-4 py-8 md:py-12">
-<div class="w-full max-w-4xl mx-auto glass-panel rounded-[2rem] p-8 md:p-12 flex flex-col items-center text-center space-y-8 shadow-2xl">
-<div class="space-y-6">
-<div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-[11px] font-semibold tracking-wider uppercase text-slate-400">
-<span class="material-symbols-outlined text-sm">smart_toy</span>
-                Registro de Usuario
-            </div>
-<div class="space-y-3">
-<h1 class="text-3xl md:text-5xl font-bold text-white tracking-tight leading-tight">
-                    Captura de Foto de Referencia Biométrica
-                </h1>
-<p class="text-slate-400 text-lg font-light max-w-xl mx-auto leading-relaxed">
-                    Posiciona tu rostro dentro del círculo y mira a la cámara para iniciar el registro
-                </p>
+<main class="flex-grow flex flex-col items-center justify-center p-6 relative">
+<div class="mb-6 inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/40 bg-primary/5 text-primary text-xs font-bold uppercase tracking-widest">
+<span class="material-symbols-outlined text-[16px] font-bold">check_circle</span>
+        Identidad Verificada
+    </div>
+<h1 class="text-3xl md:text-4xl font-bold text-white mb-4 text-center tracking-tight">
+        Verificación Facial Exitosa
+    </h1>
+<p class="text-zinc-400 text-center max-w-lg mb-12 leading-relaxed text-sm md:text-base">
+        Tu identidad ha sido confirmada correctamente.<br/>
+        Ahora puedes proceder al siguiente paso de seguridad.
+    </p>
+<div class="relative w-full max-w-sm aspect-square bg-surface-obsidian rounded-3xl border border-white/5 shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden flex items-center justify-center mb-12">
+<div class="scan-corner scan-corner-tl"></div>
+<div class="scan-corner scan-corner-tr"></div>
+<div class="scan-corner scan-corner-bl"></div>
+<div class="scan-corner scan-corner-br"></div>
+<div class="absolute top-8 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full border border-primary/30 bg-black/60 backdrop-blur-sm text-primary text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 z-10">
+<span class="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_#10b981]"></span>
+            Completado
+        </div>
+<div class="absolute inset-0 opacity-10 pointer-events-none">
+<img alt="Silhouette" class="w-full h-full object-cover grayscale mix-blend-screen" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBcrC2SPGix4iegBA4xgtB_U4JQ8ePs3eqHMWEWeEmG04Q-KSYOIqXOgBofkorLPXeiuXaPfNsSOM9-R6QPUfqilaTRDSKLuPIMqX7oTeGEvCiRTQKU3r498-Z1uLaRXNKxZdo7KGPOHdZniVXk-cwtNWC8aHsm8BVJ7ZeJjXbgPHKYgDq3aY7xGH6Vnt3BuBo-7ROK_CuyCkXfYx-edFwlXmp8welSSeDQ0TgpZ6p12dvyjJetC7kHEeTvcyNFHH4dbqH8vBliR5o"/>
+<div class="absolute inset-0 bg-gradient-to-t from-background-obsidian via-transparent to-transparent"></div>
+</div>
+<div class="relative z-10 flex flex-col items-center">
+<div class="w-48 h-48 rounded-2xl border border-primary/20 shadow-card-inner flex flex-col items-center justify-center relative bg-white/[0.02] backdrop-blur-md">
+<div class="w-16 h-16 rounded-full bg-primary/10 border border-primary/40 flex items-center justify-center mb-4 shadow-glow">
+<span class="material-symbols-outlined text-primary text-4xl font-bold">check</span>
+</div>
+<div class="px-6 py-2 bg-primary rounded-lg shadow-lg shadow-primary/20">
+<span class="text-white text-xs font-bold uppercase tracking-widest">Verificado</span>
 </div>
 </div>
-<div class="relative w-full max-w-[560px]">
-<div class="w-full aspect-[4/3] bg-black rounded-3xl overflow-hidden relative shadow-2xl border border-slate-700/50 flex items-center justify-center">
-<img alt="Camera preview silhouette" class="w-full h-full object-cover opacity-25 mix-blend-overlay grayscale" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCkAxfgifRG1OcRkBkNDAMgmTL9T4tTpSQMiGksbC56EOG0e5wSH8fNCf6u_UaX8PEVjIM_w8KKgL8N_3TNR_1MShb0oDhaK-qCIppWJLuQJVP_64Xe2upFN8aUu4ansYij2WHPC-piQaMnfyIs2ntOD6lQ3Mp4xU6iDQJ5BDA5uy82Pp1mGcfaDRJU-Pps034SzIYDkSmCuSE5zTbWBpidQGYgLOo7eL2c3Kan8GEmcmcmTj6B7CyHWt_PiOuZPvhLbBkUJj1tk6U"/>
-<div class="absolute inset-0 bg-radial-gradient(circle, transparent 30%, rgba(15, 23, 42, 0.7) 100%) pointer-events-none"></div>
-<div class="absolute top-6 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1 bg-black/60 backdrop-blur-md rounded-full border border-white/10">
-<span class="w-2 h-2 rounded-full bg-[var(--emerald)] shadow-[0_0_8px_var(--emerald)]"></span>
-<span class="text-[10px] font-bold tracking-widest text-white/90">EN VIVO</span>
-</div>
-<div class="corner-border corner-tl"></div>
-<div class="corner-border corner-tr"></div>
-<div class="corner-border corner-bl"></div>
-<div class="corner-border corner-br"></div>
-<button class="absolute bottom-16 flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-full text-white text-sm font-medium transition-all shadow-lg">
-<span class="material-symbols-outlined text-lg">center_focus_strong</span>
-                    Ajusta tu posición
-                </button>
 </div>
 </div>
-<div class="pt-4 w-full md:w-auto">
-<button class="group relative inline-flex items-center gap-3 px-10 py-5 bg-gradient-to-br from-[var(--emerald)] to-[#059669] hover:from-[#34D399] hover:to-[#10B981] rounded-2xl text-white font-bold text-lg shadow-[0_8px_30px_rgba(16,185,129,0.3)] transition-all hover:-translate-y-1 active:translate-y-0 w-full md:min-w-[340px] justify-center">
-<span class="material-symbols-outlined text-2xl">photo_camera</span>
-<span class="font-title">Capturar Foto de Referencia</span>
+<button class="group w-full max-w-sm bg-primary hover:bg-emerald-400 text-white font-bold py-4 px-8 rounded-xl shadow-glow-strong flex items-center justify-center gap-3 transition-all transform hover:scale-[1.02] active:scale-[0.98]">
+<span class="text-lg">Continuar al siguiente paso</span>
+<span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
 </button>
-</div>
-<div class="flex items-center gap-6 text-sm text-slate-500 pt-2 font-medium">
-<a class="flex items-center gap-2 hover:text-[var(--emerald)] transition-colors" href="#">
+<div class="flex items-center gap-6 mt-10 text-sm text-zinc-500">
+<a class="flex items-center gap-1.5 hover:text-primary transition-colors font-medium" href="#">
 <span class="material-symbols-outlined text-lg">settings</span>
-                Configuración
-            </a>
-<span class="text-slate-700">|</span>
-<a class="flex items-center gap-2 hover:text-[var(--emerald)] transition-colors" href="#">
-<span class="material-symbols-outlined text-lg">help_outline</span>
-                Ayuda
-            </a>
-</div>
+            Configuración
+        </a>
+<div class="w-px h-4 bg-zinc-800"></div>
+<a class="flex items-center gap-1.5 hover:text-primary transition-colors font-medium" href="#">
+<span class="material-symbols-outlined text-lg">help</span>
+            Ayuda
+        </a>
 </div>
 </main>
-<footer class="w-full py-8 text-center mt-auto">
-<div class="inline-flex items-center gap-2 text-xs text-slate-500/80 uppercase tracking-widest font-semibold cursor-default">
-<span class="material-symbols-outlined text-[14px]">lock</span>
+<footer class="w-full py-8 text-center text-[10px] text-zinc-600 flex justify-center items-center gap-2 uppercase tracking-widest font-semibold">
+<span class="material-symbols-outlined text-sm">lock</span>
 <span>Cifrado de extremo a extremo • 2FA Activado</span>
-</div>
 </footer>
 
 </body></html>

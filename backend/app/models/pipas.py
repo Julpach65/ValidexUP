@@ -1,26 +1,12 @@
-# ==============================================================================
-# Módulo de Modelos - Pipas
-# Descripción: Define la entidad Pipa (Camión de combustible) usando SQLModel.
-#              Mapeo de inventario estático para las autorizaciones.
-# ==============================================================================
-
 from typing import Optional
 from sqlmodel import SQLModel, Field
+from decimal import Decimal
 
 class Pipa(SQLModel, table=True):
-    __tablename__ = "pipas" # Nombre exacto de la tabla en MySQL
+    __tablename__ = "Pipas"
     
-    # Identificador único de sistema
-    id: Optional[int] = Field(default=None, primary_key=True)
-    
-    # Código o Placa de la Pipa (Ej: PIPA-001) usado en el frontend
-    codigo_pipa: str = Field(unique=True, index=True)
-    
-    # Capacidad geométrica total de la pipa (Litros)
-    capacidad_maxima: float
-    
-    # Volumen actual en el interior (Litros) - Actualizado por Stored Procedure
-    volumen_actual: float = Field(default=0.0)
-    
-    # Estado operativo
-    estatus: str = Field(default="ACTIVA")
+    id_pipa: Optional[int] = Field(default=None, primary_key=True)
+    placa: str = Field(unique=True, index=True)
+    capacidad_litros: Decimal
+    proveedor: Optional[str] = None
+    estado: str = Field(default="ACTIVA")

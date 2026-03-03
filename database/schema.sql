@@ -1,115 +1,80 @@
--- =======================================================================================
--- Validex UP - Script de Creación de Base de Datos (MySQL 8.0+)
--- Descripción: Este script genera toda la estructura inicial (Cascarón) de tablas, 
---              procedimientos y disparadores (triggers) basados en el análisis de 
---              requerimientos B2B de las pantallas de Stitch.
--- =======================================================================================
+-- ======================================================
+-- Validex UP - Esquema Abraham (Rama: testAbraham)
+-- ======================================================
 
-CREATE DATABASE IF NOT EXISTS validex_db
-CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS ValidexDB;
+USE ValidexDB;   
 
-USE validex_db;
-
--- -----------------------------------------------------
--- 1. Tabla de Usuarios (Identidad Central)
--- Describe a los gerentes y patrones de la plataforma.
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS usuarios (
-    id INT AUTO_INCREMENT PRIMARY KEY COMMENT 'Identificador único del usuario',
-    email VARCHAR(255) UNIQUE NOT NULL COMMENT 'Correo corporativo del empleado',
-    password_hash VARCHAR(255) NOT NULL COMMENT 'Contraseña encriptada',
-    telefono VARCHAR(20) DEFAULT NULL COMMENT 'Número telefónico vinculado para OTP',
-    rol ENUM('ADMIN', 'GERENTE', 'PATRON') DEFAULT 'GERENTE' COMMENT 'Nivel de acceso (RBAC)',
-    sms_verificado BOOLEAN DEFAULT FALSE COMMENT 'Bandera del onboarding de teléfono',
-    rostro_registrado BOOLEAN DEFAULT FALSE COMMENT 'Bandera del onboarding biométrico',
-    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Registro histórico de alta'
+-- 1. TABLA DE USUARIOS (Registro y Login en uno solo)
+CREATE TABLE IF NOT EXISTS Usuario (
+    id_usuario INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_completo VARCHAR(100) NOT NULL, -- Nombre real (ej. Abraham Orozco)
+    username VARCHAR(50) UNIQUE NOT NULL,  -- Identificador único para el Login
+    password_hash VARCHAR(255) NOT NULL,   -- Aquí guardarás la clave con Bcrypt
+    telefono VARCHAR(15),                  -- Para Twilio (formato +52...)
+    face TEXT,                   			-- Vector de la cara (DeepFace)
+    rol VARCHAR(20) DEFAULT 'GERENTE',     -- Rol predefinido
+    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
--- -----------------------------------------------------
--- 2. Tabla Biometría 
--- Maneja los vectores faciales y la foto de referencia (DeepFace).
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS biometria (
-    id INT AUTO_INCREMENT PRIMARY KEY COMMENT 'Identificador de la biometría',
-    usuario_id INT NOT NULL COMMENT 'Usuario al que pertenece el rostro',
-    foto_referencia LONGBLOB COMMENT 'Imagen base64 o binaria del enrolamiento',
-    vector_facial JSON COMMENT 'Características faciales numéricas',
-    CONSTRAINT fk_biometria_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+-- 2. TABLA DE SESIONES (Control de los 3 pasos de seguridad)
+-- sirve para registrar los pasos que se estan cumpliento
+CREATE TABLE IF NOT EXISTS Sesiones (
+    id_sesion INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT,
+    token_jwt VARCHAR(500),                -- El token que se genera al final
+    paso_1_login BOOLEAN DEFAULT FALSE,    -- ¿Pasó contraseña?
+    paso_2_sms BOOLEAN DEFAULT FALSE,      -- ¿Pasó SMS?
+    paso_3_face BOOLEAN DEFAULT FALSE,     -- ¿Pasó cara?
+    dispositivo VARCHAR(255),              -- Opcional: Para saber de qué PC entró
+    expira_at DATETIME,                    -- Fecha de cierre automático
+    FOREIGN KEY (id_usuario) REFERENCES Usuario(id_usuario) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
--- -----------------------------------------------------
--- 3. Tabla Pipas (Gestión de Hidrocarburos)
--- Inventario estático de vehículos del corporativo.
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS pipas (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    codigo_pipa VARCHAR(50) UNIQUE NOT NULL COMMENT 'Ej: PIPA-001, PIPA-002',
-    capacidad_maxima DECIMAL(10,2) NOT NULL COMMENT 'Límite volumétrico en Litros',
-    volumen_actual DECIMAL(10,2) DEFAULT 0.00 COMMENT 'Litros actualmente en la pipa',
-    estatus ENUM('ACTIVA', 'MANTENIMIENTO') DEFAULT 'ACTIVA'
+-- 3. TABLA DE CÓDIGOS OTP (Para los SMS de Twilio)
+-- one time password
+CREATE TABLE IF NOT EXISTS CodigosOTP (
+    id_otp INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT,
+    codigo VARCHAR(6) NOT NULL,            -- El número que envía Twilio
+    creado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expira_at DATETIME,                    -- Ejemplo: 5 minutos después
+    usado BOOLEAN DEFAULT FALSE,           -- Para que no se use dos veces
+    FOREIGN KEY (id_usuario) REFERENCES Usuario(id_usuario) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
--- -----------------------------------------------------
--- 4. Tabla Auditoría / Bitácora Validex
--- Tabla inmutable para el frontend de "Accesos y Descargas".
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS auditoria_logs (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    usuario_id INT COMMENT 'Usuario que realizó la acción (Puede ser nulo si es sistema)',
-    accion VARCHAR(100) NOT NULL COMMENT 'Ej: Inicio de Sesión, Autorización de Descarga',
-    estado ENUM('EXITO', 'DENEGADO') NOT NULL COMMENT 'Semáforo de seguridad de la acción',
-    detalles TEXT COMMENT 'Información adicional en formato texto',
-    fecha_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Marca de tiempo para frontend',
-    CONSTRAINT fk_auditoria_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL
+-- 4. TABLA DE PIPAS (Vehículos de transporte de combustible)
+-- Esta tabla registra los vehículos autorizados para el transporte
+CREATE TABLE IF NOT EXISTS Pipas (
+    id_pipa INT AUTO_INCREMENT PRIMARY KEY,
+    placa VARCHAR(20) UNIQUE NOT NULL,
+    capacidad_litros DECIMAL(10,2) NOT NULL,
+    proveedor VARCHAR(100),
+    estado ENUM('ACTIVA','INACTIVA') DEFAULT 'ACTIVA'
 ) ENGINE=InnoDB;
 
--- =======================================================================================
--- SECCIÓN DE LÓGICA DE BASE DE DATOS (Stored Procedures y Triggers)
--- =======================================================================================
+-- 5. TABLA DE CARGAS DE COMBUSTIBLE
+-- Guarda las descargas autorizadas de combustible,
+-- registrando la pipa, litros, tipo y el usuario que autorizó.
+CREATE TABLE IF NOT EXISTS CargasCombustible (
+    id_carga INT AUTO_INCREMENT PRIMARY KEY,
+    id_pipa INT,
+    litros_descargados DECIMAL(10,2) NOT NULL,
+    tipo_combustible ENUM('MAGNA','PREMIUM','DIESEL'),
+    autorizado_por INT,
+    fecha_carga TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_pipa) REFERENCES Pipas(id_pipa) ON DELETE SET NULL,
+    FOREIGN KEY (autorizado_por) REFERENCES Usuario(id_usuario) ON DELETE SET NULL
+) ENGINE=InnoDB;
 
-DELIMITER //
-
--- Procedimiento Almacenado: Registrar la Autorización de Pipa de manera segura
-CREATE PROCEDURE RegistrarAutorizacionPipa(
-    IN p_usuario_id INT,
-    IN p_codigo_pipa VARCHAR(50),
-    IN p_litros DECIMAL(10,2),
-    OUT p_resultado VARCHAR(100)
-)
-BEGIN
-    DECLARE v_pipa_id INT;
-    DECLARE v_cap_max DECIMAL(10,2);
-    
-    -- Manejo de transacciones
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        SET p_resultado = 'ERROR: Transacción Abortada';
-    END;
-
-    START TRANSACTION;
-    
-    -- Ubicar Pipa
-    SELECT id, capacidad_maxima INTO v_pipa_id, v_cap_max 
-    FROM pipas WHERE codigo_pipa = p_codigo_pipa LIMIT 1;
-    
-    IF v_pipa_id IS NOT NULL THEN
-        -- Actualizar litros
-        UPDATE pipas SET volumen_actual = volumen_actual + p_litros WHERE id = v_pipa_id;
-        
-        -- Registrar en Bitácora con estado ÉXITO
-        INSERT INTO auditoria_logs (usuario_id, accion, estado, detalles)
-        VALUES (p_usuario_id, 'Autorización de Descarga', 'EXITO', CONCAT('Descarga de ', p_litros, ' Lts en ', p_codigo_pipa));
-        
-        SET p_resultado = 'EXITO';
-    ELSE
-        -- Registrar intento fallido
-        INSERT INTO auditoria_logs (usuario_id, accion, estado, detalles)
-        VALUES (p_usuario_id, 'Intento de Autorización', 'DENEGADO', 'Pipa no encontrada o inactiva');
-        SET p_resultado = 'ERROR: Pipa no existe';
-    END IF;
-
-    COMMIT;
-END //
-
-DELIMITER ;
+-- 6. TABLA DE BITÁCORA (Historial de acciones)
+-- Esto es para que la maestra vea quién autorizó qué cosa
+CREATE TABLE IF NOT EXISTS Bitacora (
+    id_log INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT,
+    accion VARCHAR(100),                   -- Ej: "Inicio sesión", "Autorizó carga"
+    detalles TEXT,                         -- Ej: "Acceso concedido tras MFA"
+    ip_address VARCHAR(45),
+    fecha_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_usuario) REFERENCES Usuario(id_usuario) ON DELETE SET NULL
+) ENGINE=InnoDB;

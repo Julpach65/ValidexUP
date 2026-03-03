@@ -8,11 +8,23 @@ export default function LoginPage() {
   const [password, setPassword] = useState('secretpassword')
   const [showPassword, setShowPassword] = useState(false)
 
+<<<<<<< HEAD
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     // En el diseño original, el login redirige a verificar-sms
     router.push('/verificar-sms')
   }
+=======
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    // Simulating authentication flow
+    setTimeout(() => {
+      setIsLoading(false);
+      router.push('/verificar-sms'); // Siguiente paso del onboarding
+    }, 1500);
+  };
+>>>>>>> 24840eff08b1ed8e0c5ccb270cb59b1c6ad76a9f
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden bg-[#0B1120]">

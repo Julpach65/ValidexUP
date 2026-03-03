@@ -11,10 +11,29 @@ export default function CrearCuentaPage() {
     })
     const [showPassword, setShowPassword] = useState(false)
 
+<<<<<<< HEAD
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
         router.push('/verificar-sms')
     }
+=======
+export default function SignupPage() {
+    const router = useRouter();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [role, setRole] = useState('GERENTE');
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleSignup = (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsLoading(true);
+        // Simulating signup flow
+        setTimeout(() => {
+            setIsLoading(false);
+            router.push('/verificar-sms'); // Luego de crear, va al SMS
+        }, 1500);
+    };
+>>>>>>> 24840eff08b1ed8e0c5ccb270cb59b1c6ad76a9f
 
     return (
         <div className="min-h-screen flex flex-col relative overflow-hidden bg-[#0B1120]">
