@@ -27,6 +27,5 @@ Seguimos un flujo de trabajo profesional para proteger la rama principal de prod
 *   `feature/ai-biometrics`: Entrenamiento e implementacion de logica DeepFace.
 *   `feature/database`: Migraciones, Modelos SQLModel y arquitectura BD.
 
-## Inicializacion Local
-Este repositorio alojara todos los submodulos o carpetas de cada capa arquitectonica para asegurar el flujo agil en solo 4 semanas de desarrollo.
+
 
