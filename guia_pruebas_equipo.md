@@ -1,10 +1,10 @@
-# manual_validación_equipo.md - Guía de Pruebas Rápidas 🚀
+# manual_validación_equipo.md - Guía de Pruebas Rápidas 
 
 Esta guía es para que cualquier miembro del equipo pueda validar que el sistema funciona correctamente después de hacer `git pull origin develop`.
 
 ---
 
-## 🛠️ 1. Preparación de la Máquina
+##  1. Preparación de la Máquina
 Antes de nada, asegúrate de estar al día:
 ```bash
 git checkout develop
@@ -22,7 +22,7 @@ git pull origin develop
 
 ---
 
-## 🧪 2. El "Test Dorado" (Flujo Completo)
+##  2. El "Test Dorado" (Flujo Completo)
 
 Sigue estos pasos para comprobar que nada está roto:
 
@@ -46,7 +46,7 @@ Sigue estos pasos para comprobar que nada está roto:
 
 ---
 
-## 🚛 3. Módulo de Pipas (Nuevas Vistas)
+##  3. Módulo de Pipas (Nuevas Vistas)
 Para probar las pantallas de operación:
 - Ve directamente a `http://localhost:3000/pipas/descarga-en-curso` para ver el gauge de carga.
 - Ve a `http://localhost:3000/pipas/descarga-finalizada` para ver el resumen de éxito.
