@@ -13,7 +13,7 @@ class Usuario(SQLModel, table=True):
     
     id_usuario: Optional[int] = Field(default=None, primary_key=True)
     nombre_completo: str
-    username: str = Field(unique=True, index=True)
+    email: str = Field(unique=True, index=True)
     password_hash: str
     telefono: Optional[str] = None
     face: Optional[str] = None # Para el paso 3 (Cara)

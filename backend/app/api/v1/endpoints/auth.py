@@ -3,7 +3,7 @@ import random
 from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlmodel import Session, select
+from sqlmodel import Session, select, SQLModel
 
 # Importamos solo lo que necesitamos de sms.py
 from app.core.sms import enviar_codigo_custom
@@ -67,7 +67,7 @@ def register_user(
     """
     Registra un nuevo usuario con rol (Gerente, Admin, Visor) y envía el primer OTP.
     """
-    statement = select(Usuario).where(Usuario.username == user_in.username)
+    statement = select(Usuario).where(Usuario.email == user_in.email)
     user = session.exec(statement).first()
     
     if user:
@@ -78,7 +78,7 @@ def register_user(
         
     db_user = Usuario(
         nombre_completo=user_in.nombre_completo,
-        username=user_in.username,
+        email=user_in.email,
         password_hash=security.get_password_hash(user_in.password),
         rol=user_in.rol, # Usa el Enum de roles de la maestra
         telefono=user_in.telefono
