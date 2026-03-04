@@ -51,7 +51,12 @@ def login_access_token(
         subject=user.id_usuario, expires_delta=access_token_expires
     )
     
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {
+        "access_token": access_token, 
+        "token_type": "bearer",
+        "id_usuario": user.id_usuario,
+        "rol": user.rol
+    }
 
 @router.post("/register", response_model=UsuarioOut)
 def register_user(

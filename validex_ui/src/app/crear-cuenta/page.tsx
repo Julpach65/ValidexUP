@@ -11,10 +11,43 @@ export default function CrearCuentaPage() {
     })
     const [showPassword, setShowPassword] = useState(false)
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault()
-        router.push('/verificar-sms')
+    
+const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+        // 1.Endpoint de registro
+        const response = await fetch('http://localhost:8000/api/v1/auth/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                nombre_completo: formData.nombre,
+                email: formData.email,
+                password: formData.password,
+                rol: "GERENTE" 
+            }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            // 2. IMPORTANTE: Guardamos el ID del usuario que nos dio el Backend.
+            // Lo necesitaremos en la siguiente pantalla para saber a quién ponerle el teléfono.
+            localStorage.setItem('id_usuario_actual', data.id_usuario);
+            
+            // 3. Si todo salió bien en la DB, avanzamos al flujo de SMS
+            router.push('/verificar-sms'); 
+        } else {
+            // Si el correo ya existe o hay un error, lo mostramos
+            alert("Error en el registro: " + (data.detail || "Intenta con otro correo"));
+        }
+    } catch (error) {
+        console.error("Error de conexión:", error);
+        alert("No se pudo conectar con el servidor. Revisa que el backend esté encendido.");
     }
+};
 
     return (
         <div className="min-h-screen flex flex-col relative overflow-hidden bg-[#0B1120]">
