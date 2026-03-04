@@ -36,3 +36,22 @@ def validar_codigo_verificacion(telefono: str, codigo: str):
         .create(to=telefono, code=codigo)
     
     return check.status == "approved"
+
+def enviar_codigo_custom(telefono: str, codigo: str):
+    """
+    Envía un código específico generado por el backend (DB-backed).
+    """
+    if settings.MOCK_SMS:
+        print(f"--- MOCK SMS (DB-Backed) ---")
+        print(f"Enviando código {codigo} al número: {telefono}")
+        print(f"-----------------")
+        return "queued"
+
+    # Para envío real de un código custom, usamos Programmable Messaging
+    # Asumimos que existe un número emisor configurado o usamos un Messaging Service
+    message = client.messages.create(
+        body=f"Tu código de verificación Validex es: {codigo}",
+        to=telefono,
+        from_=settings.TWILIO_PHONE_NUMBER if hasattr(settings, 'TWILIO_PHONE_NUMBER') else None
+    )
+    return message.status

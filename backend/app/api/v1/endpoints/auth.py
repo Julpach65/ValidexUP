@@ -1,16 +1,18 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
+import random
 from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlmodel import Session, select
+from sqlmodel import Session, select, SQLModel
 
 # Importamos las funciones del archivo sms.py
-from app.core.sms import enviar_codigo_verificacion, validar_codigo_verificacion 
+from app.core.sms import enviar_codigo_verificacion, validar_codigo_verificacion, enviar_codigo_custom
 
 from app.core.config import settings
 from app.core import security
 from app.core.db import get_session
 from app.models.usuarios import Usuario
+from app.models.verification import CodigoOTP
 from app.models.sesiones import Sesion
 from app.schemas.user import UsuarioCreate, UsuarioOut
 from app.schemas.token import Token
@@ -73,8 +75,22 @@ def register_user(
     session.refresh(db_user)
     
     # 2. Disparamos el código de verificación (Real o Mock)
+    # MODIFICADO: Ahora generamos el código localmente para guardarlo en DB
     if db_user.telefono:
-        enviar_codigo_verificacion(db_user.telefono)
+        # Generar código de 6 dígitos
+        code = f"{random.randint(100000, 999999)}"
+        expires_at = datetime.utcnow() + timedelta(minutes=5)
+        
+        otp_entry = CodigoOTP(
+            id_usuario=db_user.id_usuario,
+            codigo=code,
+            expira_at=expires_at,
+            usado=False
+        )
+        session.add(otp_entry)
+        session.commit()
+        
+        enviar_codigo_custom(db_user.telefono, code)
     
     return db_user
 
@@ -117,3 +133,54 @@ def verify_otp(
     session.commit()
     
     return {"msg": "Verificación exitosa", "status": "approved", "paso_2_sms": True}
+
+class VerifySMSRequest(SQLModel):
+    id_usuario: int
+    codigo: str
+
+@router.post("/verify-sms")
+def verify_sms(
+    body: VerifySMSRequest,
+    session: Session = Depends(get_session)
+) -> Any:
+    """
+    Verifica el código contra la base de datos local.
+    Valida expiración (5 minutos) y actualiza la sesión.
+    """
+    # Buscar el código en la base de datos
+    statement = select(CodigoOTP).where(
+        CodigoOTP.id_usuario == body.id_usuario,
+        CodigoOTP.codigo == body.codigo,
+        CodigoOTP.usado == False
+    )
+    otp_record = session.exec(statement).first()
+
+    if not otp_record:
+        raise HTTPException(status_code=400, detail="Código incorrecto o ya utilizado.")
+
+    # Validar expiración
+    if datetime.utcnow() > otp_record.expira_at:
+        raise HTTPException(
+            status_code=400, 
+            detail="El código expiró y debe solicitar uno nuevo."
+        )
+
+    # Si es correcto:
+    # 1. Marcar código como usado
+    otp_record.usado = True
+    session.add(otp_record)
+
+    # 2. Actualizar la tabla Sesiones
+    statement_sesion = select(Sesion).where(Sesion.id_usuario == body.id_usuario)
+    sesion_activa = session.exec(statement_sesion).first()
+
+    if not sesion_activa:
+        # Si no existe sesión (ej. registro nuevo), creamos una
+        sesion_activa = Sesion(id_usuario=body.id_usuario, paso_2_sms=True)
+    else:
+        sesion_activa.paso_2_sms = True
+    
+    session.add(sesion_activa)
+    session.commit()
+        
+    return {"msg": "Código verificado correctamente", "status": "SMS_VERIFIED"}
