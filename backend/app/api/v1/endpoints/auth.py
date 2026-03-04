@@ -1,3 +1,5 @@
+from app.services.face_service import get_face_embedding
+import json 
 from datetime import datetime, timedelta
 import random
 from typing import Any
@@ -5,14 +7,11 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session, select, SQLModel
 
-# Importamos solo lo que necesitamos de sms.py
 from app.core.sms import enviar_codigo_custom
-
 from app.core.config import settings
 from app.core import security
 from app.core.db import get_session
 
-# Modelos corregidos (uno por archivo)
 from app.models.usuarios import Usuario
 from app.models.codigos_otp import CodigoOTP
 from app.models.sesiones import Sesion
@@ -27,21 +26,16 @@ def login_access_token(
     session: Session = Depends(get_session), 
     form_data: OAuth2PasswordRequestForm = Depends()
 ) -> Any:
-    """
-    Paso 1: Login con contraseña. 
-    Verifica credenciales y crea el registro inicial en la tabla Sesiones.
-    """
-    statement = select(Usuario).where(Usuario.username == form_data.username)
+    # AJUSTE: Buscamos por EMAIL porque eliminaste la columna username
+    statement = select(Usuario).where(Usuario.email == form_data.username)
     user = session.exec(statement).first()
     
     if not user or not security.verify_password(form_data.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Credenciales incorrectas",
-            headers={"WWW-Authenticate": "Bearer"},
         )
     
-    # --- MODIFICACIÓN: Registro de inicio de sesión en tabla Sesiones ---
     statement_sesion = select(Sesion).where(Sesion.id_usuario == user.id_usuario)
     sesion_activa = session.exec(statement_sesion).first()
     
@@ -51,7 +45,6 @@ def login_access_token(
     sesion_activa.paso_1_login = True
     session.add(sesion_activa)
     session.commit()
-    # ------------------------------------------------------------------
 
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = security.create_access_token(
@@ -64,23 +57,17 @@ def login_access_token(
 def register_user(
     *, session: Session = Depends(get_session), user_in: UsuarioCreate
 ) -> Any:
-    """
-    Registra un nuevo usuario con rol (Gerente, Admin, Visor) y envía el primer OTP.
-    """
     statement = select(Usuario).where(Usuario.email == user_in.email)
     user = session.exec(statement).first()
     
     if user:
-        raise HTTPException(
-            status_code=400,
-            detail="El nombre de usuario ya se encuentra registrado.",
-        )
+        raise HTTPException(status_code=400, detail="El email ya está registrado.")
         
     db_user = Usuario(
         nombre_completo=user_in.nombre_completo,
         email=user_in.email,
         password_hash=security.get_password_hash(user_in.password),
-        rol=user_in.rol, # Usa el Enum de roles de la maestra
+        rol=user_in.rol,
         telefono=user_in.telefono
     )
     
@@ -88,10 +75,8 @@ def register_user(
     session.commit()
     session.refresh(db_user)
     
-    # Generar código OTP inicial
     if db_user.telefono:
         code = f"{random.randint(100000, 999999)}"
-        # MODIFICACIÓN: Se usa expira_at coherente con la tabla CodigosOTP
         otp_entry = CodigoOTP(
             id_usuario=db_user.id_usuario,
             codigo=code,
@@ -100,7 +85,6 @@ def register_user(
         )
         session.add(otp_entry)
         session.commit()
-        
         enviar_codigo_custom(db_user.telefono, code)
     
     return db_user
@@ -110,14 +94,7 @@ class VerifySMSRequest(SQLModel):
     codigo: str
 
 @router.post("/verify-sms")
-def verify_sms(
-    body: VerifySMSRequest,
-    session: Session = Depends(get_session)
-) -> Any:
-    """
-    Paso 2: Verifica el SMS contra CodigosOTP y actualiza Sesiones.
-    """
-    # Buscar el código activo (no usado) en CodigosOTP
+def verify_sms(body: VerifySMSRequest, session: Session = Depends(get_session)) -> Any:
     statement = select(CodigoOTP).where(
         CodigoOTP.id_usuario == body.id_usuario,
         CodigoOTP.codigo == body.codigo,
@@ -125,21 +102,12 @@ def verify_sms(
     )
     otp_record = session.exec(statement).first()
 
-    if not otp_record:
-        raise HTTPException(status_code=400, detail="Código incorrecto o ya utilizado.")
+    if not otp_record or datetime.utcnow() > otp_record.expira_at:
+        raise HTTPException(status_code=400, detail="Código incorrecto o expirado.")
 
-    # Validar expiración (Si el reloj llegó a 0:00)
-    if datetime.utcnow() > otp_record.expira_at:
-        raise HTTPException(
-            status_code=400, 
-            detail="El código expiró. Solicite uno nuevo."
-        )
-
-    # 1. Marcar código como usado
     otp_record.usado = True
     session.add(otp_record)
 
-    # 2. Actualizar Sesiones (Paso 2 completado)
     statement_sesion = select(Sesion).where(Sesion.id_usuario == body.id_usuario)
     sesion_activa = session.exec(statement_sesion).first()
 
@@ -150,4 +118,41 @@ def verify_sms(
     session.add(sesion_activa)
     session.commit()
         
-    return {"msg": "Código verificado correctamente", "status": "SMS_VERIFIED"}
+    return {"msg": "Paso 2 completado", "status": "SMS_VERIFIED"}
+
+# --- PASO 3: REGISTRO DE CARA (AL FINAL) ---
+@router.post("/register-face/{user_id}")
+def register_face(
+    user_id: int, 
+    image_data: str, # Aquí recibiremos el Base64 de la cámara
+    session: Session = Depends(get_session)
+):
+    """
+    Toma la foto de referencia, la convierte en números y la guarda
+    en la columna 'face' del usuario.
+    """
+    # 1. Usamos el servicio que creaste para obtener los números (embedding)
+    embedding = get_face_embedding(image_data)
+    
+    if not embedding:
+        raise HTTPException(
+            status_code=400, 
+            detail="No se pudo detectar un rostro. Intenta con mejor iluminación."
+        )
+
+    # 2. Buscamos al usuario en la base de datos (ej. Karol)
+    user = session.get(Usuario, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    # 3. Guardamos los números. 
+    # Como la columna 'face' es TEXT, convertimos la lista a un string JSON.
+    user.face = json.dumps(embedding)
+    
+    session.add(user)
+    session.commit()
+
+    return {
+        "status": "success",
+        "message": f"Rostro de {user.nombre_completo} registrado correctamente."
+    }
