@@ -11,7 +11,7 @@ export default function CrearCuentaPage() {
     const [formData, setFormData] = useState({
         nombre_completo: '',
         email: '',
-        password: '',
+        password: ''
     });
     const [isLoading, setIsLoading] = useState(false);
     const [isPasswordValid, setIsPasswordValid] = useState(false);
@@ -66,7 +66,7 @@ export default function CrearCuentaPage() {
                 setIsSuccess(true); // Activa la animación de éxito
                 setTimeout(() => {
                     router.push('/verificar-sms');
-                }, 1000); // Retraso extendido para apreciar el feedback
+                }, 2500); // Retraso extendido para apreciar el feedback
             } else {
                 alert(`Error en el registro: ${data.detail || 'Ocurrió un error.'}`);
             }
@@ -144,7 +144,7 @@ export default function CrearCuentaPage() {
                                 />
                                 {emailError && <p className="text-red-400 text-xs font-bold ml-1 animate-pulse">{emailError}</p>}
                             </div>
-                            
+
                             <div className="space-y-2">
                                 <label className="text-[10px] uppercase tracking-[0.3em] font-black text-slate-500 ml-1">Contraseña Segura</label>
                                 <div className="relative">
