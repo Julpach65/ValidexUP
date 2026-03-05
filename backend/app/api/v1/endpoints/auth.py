@@ -82,12 +82,15 @@ def register_user(
     if user:
         raise HTTPException(status_code=400, detail="El email ya está registrado.")
         
+    # Se asume que el schema UsuarioCreate ya no incluye 'username'.
+    # Se usará el email como username para consistencia con el login y simplificar el registro.
     db_user = Usuario(
         nombre_completo=user_in.nombre_completo,
+        username=user_in.email,  # Usar el email como username.
         email=user_in.email,
         password_hash=security.get_password_hash(user_in.password),
         rol=user_in.rol,
-        telefono=user_in.telefono
+        telefono=user_in.telefono # Este campo es opcional en el registro inicial.
     )
     
     session.add(db_user)
