@@ -14,6 +14,20 @@ export default function RegisterSMSPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds
 
+    //  MODIFICADO: Estado para recuperar el ID del usuario registrado en la pantalla anterior
+    const [userId, setUserId] = useState<string | null>(null);
+
+    // 🛠️ MODIFICADO: Efecto para recuperar el ID del localStorage al cargar la página
+    useEffect(() => {
+        const savedId = localStorage.getItem('id_usuario_actual');
+        if (!savedId) {
+            // Si no hay ID, el usuario se saltó el paso 1. Lo regresamos.
+            router.push('/crear-cuenta');
+        } else {
+            setUserId(savedId);
+        }
+    }, [router]);
+
     // Timer logic for OTP
     useEffect(() => {
         let timer: NodeJS.Timeout;
@@ -36,26 +50,67 @@ export default function RegisterSMSPage() {
         setPhone(value);
     };
 
-    const handleSendSMS = () => {
-        if (phone.length !== 10) return;
+    // 🛠️ MODIFICADO: Ahora envía el teléfono al backend para actualizar el usuario y generar el OTP
+    const handleSendSMS = async () => {
+        if (phone.length !== 10 || !userId) return;
         setIsLoading(true);
-        setTimeout(() => {
+
+        try {
+            // Cambia esta URL por tu endpoint real de FastAPI
+            const response = await fetch('http://localhost:8000/api/v1/auth/request-otp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id_usuario: parseInt(userId),
+                    telefono: phone
+                }),
+            });
+
+            if (response.ok) {
+                setStep('otp');
+                setTimeLeft(300); // Reset timer
+            } else {
+                const errorData = await response.json();
+                alert("Error: " + (errorData.detail || "No se pudo enviar el SMS"));
+            }
+        } catch (error) {
+            console.error("Error de conexión:", error);
+            alert("No hay conexión con el servidor de Validex UP.");
+        } finally {
             setIsLoading(false);
-            setStep('otp');
-            setTimeLeft(300); // Reset timer on new send
-        }, 1200);
+        }
     };
 
-    const handleVerifyOTP = () => {
+    // 🛠️ MODIFICADO: Ahora valida el código contra la base de datos real
+   const handleVerifyOTP = async () => {
         const fullCode = otp.join('');
-        if (fullCode.length < 6) return;
+        if (fullCode.length < 6 || !userId) return;
         setIsLoading(true);
-        setTimeout(() => {
+
+        try {
+            const response = await fetch('http://localhost:8000/api/v1/auth/verify-otp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id_usuario: parseInt(userId),
+                    codigo: fullCode
+                }),
+            });
+
+            const data = await response.json();
+
+            // 🛠️ CAMBIO AQUÍ: Usamos data.status porque así responde tu Python
+            if (response.ok && data.status === "SMS_VERIFIED") {
+                router.push(`/verificar-sms/correcta?phone=${phone}&code=${fullCode}`);
+            } else {
+                router.push(`/verificar-sms/fallida?phone=${phone}`);
+            }
+        } catch (error) {
+            console.error("Error de verificación:", error);
+            router.push(`/verificar-sms/fallida?phone=${phone}`);
+        } finally {
             setIsLoading(false);
-            // Simulación: '000000' falla, cualquier otro código es correcto
-            const target = fullCode === '000000' ? 'fallida' : 'correcta';
-            router.push(`/verificar-sms/${target}?code=${fullCode}&phone=${phone}`);
-        }, 1500);
+        }
     };
 
     const handleOtpChange = (index: number, value: string) => {
@@ -83,23 +138,17 @@ export default function RegisterSMSPage() {
             <OnboardingSidebar />
 
             <main className="flex-1 flex flex-col items-center justify-center p-6 sm:p-12 relative z-10">
-                {/* Unified Stepper (SMS focused) */}
+                {/* Unified Stepper */}
                 <div className="w-full max-w-md mb-16 relative">
                     <div className="flex items-center justify-between relative">
                         <div className="absolute top-1/2 left-0 w-full h-0.5 bg-slate-800 -z-10 transform -translate-y-1/2"></div>
-
-                        {/* Step 1: Registro (Completed) */}
                         <div className="flex flex-col items-center gap-2 bg-[#0B1120] px-3 text-[#10B981]">
                             <div className="w-10 h-10 rounded-full border border-[#10B981]/40 flex items-center justify-center bg-[#0B1120] shadow-[0_0_10px_rgba(16,185,129,0.2)]">
                                 <span className="material-icons-round text-lg">check_circle</span>
                             </div>
                             <span className="text-[10px] font-bold tracking-[0.2em] uppercase">Registro</span>
                         </div>
-
-                        {/* Progress Line */}
                         <div className="absolute top-1/2 left-[15%] w-[35%] h-0.5 bg-[#10B981]/50 -z-10 transform -translate-y-1/2 shadow-[0_0_8px_rgba(16,185,129,0.3)]"></div>
-
-                        {/* Step 2: SMS (Active) */}
                         <div className="flex flex-col items-center gap-2 relative bg-[#0B1120] px-3">
                             <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/4 w-14 h-14 bg-[#10B981]/25 rounded-full blur-xl animate-pulse"></div>
                             <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#10B981] to-emerald-600 text-white flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.5)] border-2 border-[#10B981]/20 relative z-10 transition-all">
@@ -107,13 +156,12 @@ export default function RegisterSMSPage() {
                             </div>
                             <span className="text-[10px] font-bold tracking-[0.2em] text-white uppercase mt-1">SMS</span>
                         </div>
-
-                        {/* Step 3: Cara (Pending) */}
                         <div className="flex flex-col items-center gap-2 bg-[#0B1120] px-3 text-slate-600">
                             <div className="w-10 h-10 rounded-full border border-slate-800 flex items-center justify-center bg-[#0B1120]/50">
                                 <span className="material-icons-outlined text-lg">face</span>
                             </div>
-                            <span className="text-[10px] font-bold tracking-[0.2em] uppercase">Cara</span>                        </div>
+                            <span className="text-[10px] font-bold tracking-[0.2em] uppercase">Cara</span>
+                        </div>
                     </div>
                 </div>
 
@@ -142,7 +190,7 @@ export default function RegisterSMSPage() {
                                         <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none z-10">
                                             <span className="text-[#10B981] font-black text-sm">+52</span>
                                         </div>
-                                        <div className="w-full h-16 bg-[#0f172a] border border-slate-800 rounded-2xl text-white pl-12 pr-4 flex items-center focus-within:border-[#10B981]/50 transition-all font-black text-sm shadow-inner group-hover:border-slate-700">
+                                        <div className="w-full h-16 bg-[#0f172a] border border-slate-800 rounded-2xl text-white pl-12 pr-4 flex items-center font-black text-sm shadow-inner group-hover:border-slate-700">
                                             MEX
                                         </div>
                                     </div>
@@ -152,7 +200,7 @@ export default function RegisterSMSPage() {
                                             value={phone}
                                             onChange={handlePhoneChange}
                                             placeholder="55 1234 5678"
-                                            className="w-full h-16 bg-[#0f172a] border border-slate-800 rounded-2xl text-white px-6 placeholder-slate-800 focus:outline-none focus:ring-2 focus:ring-[#10B981]/40 focus:border-[#10B981] text-xl font-black tracking-[0.2em] transition-all shadow-inner group-hover:border-slate-700"
+                                            className="w-full h-16 bg-[#0f172a] border border-slate-800 rounded-2xl text-white px-6 focus:outline-none focus:ring-2 focus:ring-[#10B981]/40 focus:border-[#10B981] text-xl font-black tracking-[0.2em] transition-all shadow-inner"
                                         />
                                         {phone.length === 10 && (
                                             <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[#10B981] animate-in zoom-in duration-300">
@@ -161,9 +209,6 @@ export default function RegisterSMSPage() {
                                         )}
                                     </div>
                                 </div>
-                                <p className="text-[10px] text-slate-600 font-bold tracking-wider px-1">
-                                    * Introduzca exactamente 10 dígitos. Ejemplo: 5544332211
-                                </p>
                             </div>
 
                             <Button
@@ -181,14 +226,14 @@ export default function RegisterSMSPage() {
                 ) : (
                     <div className="w-full max-w-lg space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700">
                         <div className="text-center space-y-4">
-                            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/5 shadow-[0_0_15px_rgba(16,185,129,0.05)]">
-                                <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10B981]"></span>
+                            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/5">
+                                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
                                 <span className="text-[11px] font-bold tracking-widest text-emerald-400 uppercase">Verificación en Curso</span>
                             </div>
                             <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tight uppercase leading-tight">
                                 Validar <br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-[#10B981]">Identidad</span>
                             </h2>
-                            <p className="text-slate-400 text-base max-w-md mx-auto leading-relaxed font-medium">
+                            <p className="text-slate-400 text-base max-w-md mx-auto leading-relaxed font-medium text-center">
                                 Introduce el código de 6 dígitos enviado al dispositivo <br />
                                 <span className="text-white font-mono tracking-widest text-sm bg-slate-800/50 px-2 py-1 rounded mt-2 inline-block border border-slate-700">
                                     +52 •••• •••{phone.slice(-4)}
@@ -207,7 +252,7 @@ export default function RegisterSMSPage() {
                                         value={digit}
                                         onChange={(e) => handleOtpChange(i, e.target.value)}
                                         placeholder="•"
-                                        className="w-12 h-16 rounded-xl bg-[#0f172a] border border-slate-800 focus:border-[#10B981] focus:ring-2 focus:ring-[#10B981]/20 text-white text-2xl font-black text-center transition-all outline-none placeholder-slate-800 shadow-inner sm:w-14 sm:h-20"
+                                        className="w-12 h-16 rounded-xl bg-[#0f172a] border border-slate-800 focus:border-[#10B981] focus:ring-2 focus:ring-[#10B981]/20 text-white text-2xl font-black text-center transition-all outline-none"
                                     />
                                 ))}
                             </div>
@@ -235,10 +280,6 @@ export default function RegisterSMSPage() {
                                         Editar número
                                     </button>
                                 </div>
-
-                                <p className="text-center text-[10px] text-slate-600 font-bold tracking-widest uppercase">
-                                    ¿No recibiste el código? <button className="text-[#10B981] hover:underline ml-1">Reenviar SMS</button>
-                                </p>
                             </div>
                         </div>
                     </div>

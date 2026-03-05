@@ -21,12 +21,26 @@ from app.schemas.token import Token
 
 router = APIRouter()
 
+# --- MODELOS DE PETICIÓN (SCHEMAS) ---
+class VerifySMSRequest(SQLModel):
+    id_usuario: int
+    codigo: str
+
+class RequestOTP(SQLModel):
+    id_usuario: int
+    telefono: str
+
+class FaceRegisterRequest(SQLModel):
+    user_id: int
+    image_data: str
+
+# --- ENDPOINTS ---
+
 @router.post("/login", response_model=Token)
 def login_access_token(
     session: Session = Depends(get_session), 
     form_data: OAuth2PasswordRequestForm = Depends()
 ) -> Any:
-    # AJUSTE: Buscamos por EMAIL porque eliminaste la columna username
     statement = select(Usuario).where(Usuario.email == form_data.username)
     user = session.exec(statement).first()
     
@@ -94,11 +108,29 @@ def register_user(
     
     return db_user
 
-class VerifySMSRequest(SQLModel):
-    id_usuario: int
-    codigo: str
+@router.post("/request-otp")
+def request_new_otp(body: RequestOTP, session: Session = Depends(get_session)) -> Any:
+    user = session.get(Usuario, body.id_usuario)
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
-@router.post("/verify-sms")
+    user.telefono = body.telefono
+    session.add(user)
+
+    code = f"{random.randint(100000, 999999)}"
+    otp_entry = CodigoOTP(
+        id_usuario=user.id_usuario,
+        codigo=code,
+        expira_at=datetime.utcnow() + timedelta(minutes=5),
+        usado=False
+    )
+    session.add(otp_entry)
+    session.commit()
+    enviar_codigo_custom(user.telefono, code)
+    
+    return {"msg": "Código enviado correctamente", "status": "OTP_SENT"}
+
+@router.post("/verify-otp")
 def verify_sms(body: VerifySMSRequest, session: Session = Depends(get_session)) -> Any:
     statement = select(CodigoOTP).where(
         CodigoOTP.id_usuario == body.id_usuario,
@@ -125,39 +157,43 @@ def verify_sms(body: VerifySMSRequest, session: Session = Depends(get_session)) 
         
     return {"msg": "Paso 2 completado", "status": "SMS_VERIFIED"}
 
-# --- PASO 3: REGISTRO DE CARA (AL FINAL) ---
-@router.post("/register-face/{user_id}")
-def register_face(
-    user_id: int, 
-    image_data: str, # Aquí recibiremos el Base64 de la cámara
-    session: Session = Depends(get_session)
-):
-    """
-    Toma la foto de referencia, la convierte en números y la guarda
-    en la columna 'face' del usuario.
-    """
-    # 1. Usamos el servicio que creaste para obtener los números (embedding)
-    embedding = get_face_embedding(image_data)
+from sqlmodel import select # Asegúrate de tener esta importación arriba
+
+@router.post("/register-face")
+def register_face(data: FaceRegisterRequest, session: Session = Depends(get_session)):
+    embedding = get_face_embedding(data.image_data)
     
     if not embedding:
         raise HTTPException(
             status_code=400, 
             detail="No se pudo detectar un rostro. Intenta con mejor iluminación."
         )
-
-    # 2. Buscamos al usuario en la base de datos (ej. Karol)
-    user = session.get(Usuario, user_id)
+    
+    user = session.get(Usuario, data.user_id)
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
-    # 3. Guardamos los números. 
-    # Como la columna 'face' es TEXT, convertimos la lista a un string JSON.
+    # 1. Guardamos el rostro en el perfil del usuario
     user.face = json.dumps(embedding)
-    
     session.add(user)
-    session.commit()
 
+    # 2. ACTUALIZACIÓN DE LA TABLA SESIONES
+    # Buscamos la última sesión de este usuario donde el paso 3 sea 0
+    statement = select(Sesion).where(
+        Sesion.id_usuario == data.user_id,
+        Sesion.paso_3_face == 0
+    ).order_by(Sesion.id_sesion.desc())
+    
+    db_session = session.exec(statement).first()
+
+    if db_session:
+        db_session.paso_3_face = 1 # Marcamos el paso biométrico como completado
+        session.add(db_session)
+    
+    # Guardamos todos los cambios (Usuario y Sesión)
+    session.commit()
+    
     return {
         "status": "success",
-        "message": f"Rostro de {user.nombre_completo} registrado correctamente."
+        "message": f"Rostro de {user.nombre_completo} registrado y seguridad completada."
     }

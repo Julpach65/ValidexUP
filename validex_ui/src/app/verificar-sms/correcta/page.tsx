@@ -1,7 +1,9 @@
 'use client'
 import { useRouter, useSearchParams } from 'next/navigation'
 import OnboardingSidebar from '@/components/layout/OnboardingSidebar'
-import { Suspense } from 'react'
+import { Suspense } from 'react';
+import AuthGuard from '@/components/AuthGuard';
+
 
 function SmsCorrectaContent() {
     const router = useRouter()
@@ -106,7 +108,9 @@ function SmsCorrectaContent() {
 export default function SmsCorrectaPage() {
     return (
         <Suspense fallback={<div className="min-h-screen bg-[#0F172A] flex items-center justify-center text-white">Cargando...</div>}>
-            <SmsCorrectaContent />
+            <AuthGuard>
+                <SmsCorrectaContent />
+            </AuthGuard>
         </Suspense>
     )
 }
