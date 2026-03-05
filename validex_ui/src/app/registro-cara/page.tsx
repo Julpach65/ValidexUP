@@ -1,9 +1,82 @@
 'use client'
+
 import { useRouter } from 'next/navigation'
-import OnboardingHeader from '@/components/layout/OnboardingHeader'
+import React, { useRef, useState, useEffect } from 'react'
 
 export default function RegistroCaraPage() {
     const router = useRouter()
+    
+    // --- LÓGICA DE CÁMARA ---
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const [stream, setStream] = useState<MediaStream | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [userId, setUserId] = useState<string | null>(null);
+
+    useEffect(() => {
+        const savedId = localStorage.getItem('id_usuario_actual');
+        if (!savedId) router.push('/crear-cuenta');
+        else setUserId(savedId);
+
+        startCamera();
+        // Limpieza al cerrar la página
+        return () => {
+            if (stream) stream.getTracks().forEach(track => track.stop());
+        }
+    }, []);
+
+    const startCamera = async () => {
+        try {
+            const mediaStream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: 'user', width: 1280, height: 720 } 
+            });
+            setStream(mediaStream);
+            if (videoRef.current) videoRef.current.srcObject = mediaStream;
+        } catch (err) {
+            console.error("Error cámara:", err);
+            alert("Permite el acceso a la cámara para continuar.");
+        }
+    };
+
+    const handleCaptureAndUpload = async () => {
+        const video = videoRef.current;
+        const canvas = canvasRef.current;
+        if (!video || !canvas || !userId) return;
+
+        setIsLoading(true);
+        const context = canvas.getContext('2d');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context?.drawImage(video, 0, 0);
+        
+        const photoBase64 = canvas.toDataURL('image/jpeg', 0.8);
+
+        try {
+            // 🛠️ CAMBIO 1: URL limpia.
+            // Eliminamos el ID de la URL (antes era .../register-face/${userId}) para evitar errores 404.
+            const response = await fetch('http://localhost:8000/api/v1/auth/register-face', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                // 🛠️ CAMBIO 2: Objeto JSON unificado.
+                // Ajustamos las claves para que coincidan EXACTAMENTE con el esquema Pydantic del backend.
+                body: JSON.stringify({
+                    user_id: parseInt(userId), // Antes 'id_usuario'. Backend espera 'user_id'.
+                    image_data: photoBase64    // Antes 'face_data'. Backend espera 'image_data'.
+                }),
+            });
+
+            if (response.ok) {
+                router.push('/dashboard'); // O la ruta final que desees
+            } else {
+                alert("Error al registrar rostro. Intenta de nuevo.");
+            }
+        } catch (error) {
+            console.error("Error:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    // ------------------------
 
     return (
         <div className="min-h-screen flex flex-col bg-[#0B1120] text-slate-300 font-sans selection:bg-[#10B981] selection:text-white">
@@ -18,58 +91,57 @@ export default function RegistroCaraPage() {
                     position: absolute;
                     width: 40px;
                     height: 40px;
-                    border-color: rgba(255, 255, 255, 0.5);
+                    border-color: rgba(16, 185, 129, 0.5); /* Cambiado a verde para que resalte */
                     border-style: solid;
                     pointer-events: none;
+                    z-index: 30;
                 }
                 .corner-tl { top: 20px; left: 20px; border-width: 3px 0 0 3px; border-top-left-radius: 4px; }
                 .corner-tr { top: 20px; right: 20px; border-width: 3px 3px 0 0; border-top-right-radius: 4px; }
                 .corner-bl { bottom: 20px; left: 20px; border-width: 0 0 3px 3px; border-bottom-left-radius: 4px; }
                 .corner-br { bottom: 20px; right: 20px; border-width: 0 3px 3px 0; border-bottom-right-radius: 4px; }
+                
+                @keyframes scan {
+                    0% { top: 0%; opacity: 0; }
+                    50% { opacity: 1; }
+                    100% { top: 100%; opacity: 0; }
+                }
+                .animate-scan-line {
+                    animation: scan 3s linear infinite;
+                }
             `}</style>
 
-            {/* Header based on registrocara.html */}
             <header className="w-full px-6 py-6 border-b border-white/5 flex flex-col md:flex-row items-center justify-between relative z-20 bg-[#0B111D]/80 backdrop-blur-xl">
                 <div className="flex items-center space-x-3 cursor-pointer mb-8 md:mb-0" onClick={() => router.push('/')}>
                     <div className="w-10 h-10 flex items-center justify-center">
-                        <img src="/logo.png" alt="Validex UP Logo" className="w-full h-full object-contain" />
+                        <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
                     </div>
                     <div className="text-xl font-black tracking-tighter text-white uppercase">
                         Validex <span className="text-[#10B981]">UP</span>
                     </div>
                 </div>
 
-                {/* Unified Stepper (Cara Active) */}
+                {/* Tu Stepper se mantiene igual */}
                 <div className="w-full max-w-md relative">
                     <div className="flex items-center justify-between relative">
                         <div className="absolute top-1/2 left-0 w-full h-0.5 bg-[#10B981]/20 -z-10 transform -translate-y-1/2"></div>
-
-                        {/* Step 1: Registro (Completed) */}
+                        {/* Step 1 */}
                         <div className="flex flex-col items-center gap-2 bg-[#0B111D] px-3 text-[#10B981]">
-                            <div className="w-9 h-9 rounded-full border border-[#10B981]/40 flex items-center justify-center bg-[#0B111D] shadow-[0_0_10px_rgba(16,185,129,0.2)]">
+                            <div className="w-9 h-9 rounded-full border border-[#10B981]/40 flex items-center justify-center bg-[#0B111D]">
                                 <span className="material-icons-round text-lg">check_circle</span>
                             </div>
                             <span className="text-[9px] font-black tracking-[0.2em] uppercase">Registro</span>
                         </div>
-
-                        {/* Progress Line 1 */}
-                        <div className="absolute top-1/2 left-[15%] w-[35%] h-0.5 bg-[#10B981]/50 -z-10 transform -translate-y-1/2 shadow-[0_0_8px_rgba(16,185,129,0.3)]"></div>
-
-                        {/* Step 2: SMS (Completed) */}
+                        {/* Step 2 */}
                         <div className="flex flex-col items-center gap-2 bg-[#0B111D] px-3 text-[#10B981]">
-                            <div className="w-9 h-9 rounded-full border border-[#10B981]/40 flex items-center justify-center bg-[#0B111D] shadow-[0_0_10px_rgba(16,185,129,0.2)]">
+                            <div className="w-9 h-9 rounded-full border border-[#10B981]/40 flex items-center justify-center bg-[#0B111D]">
                                 <span className="material-icons-round text-lg">check_circle</span>
                             </div>
                             <span className="text-[9px] font-black tracking-[0.2em] uppercase">SMS</span>
                         </div>
-
-                        {/* Progress Line 2 */}
-                        <div className="absolute top-1/2 left-[50%] w-[35%] h-0.5 bg-[#10B981]/50 -z-10 transform -translate-y-1/2 shadow-[0_0_8px_rgba(16,185,129,0.3)]"></div>
-
-                        {/* Step 3: Cara (Active) */}
+                        {/* Step 3 (Activo) */}
                         <div className="flex flex-col items-center gap-2 relative bg-[#0B111D] px-3">
-                            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/4 w-14 h-14 bg-[#10B981]/25 rounded-full blur-xl animate-pulse"></div>
-                            <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#10B981] to-emerald-600 text-white flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.4)] border-2 border-[#10B981]/20 relative z-10">
+                            <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#10B981] to-emerald-600 text-white flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.4)] relative z-10">
                                 <span className="material-icons-round text-xl">face</span>
                             </div>
                             <span className="text-[9px] font-black tracking-[0.2em] text-white uppercase mt-1">Cara</span>
@@ -77,10 +149,7 @@ export default function RegistroCaraPage() {
                     </div>
                 </div>
 
-                <button
-                    onClick={() => router.push('/')}
-                    className="hidden md:flex px-5 py-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 text-slate-300 text-[10px] font-black tracking-widest uppercase transition-colors border border-slate-700"
-                >
+                <button onClick={() => router.push('/')} className="hidden md:flex px-5 py-2 rounded-lg border border-slate-700 uppercase text-[10px] font-black">
                     Cancelar
                 </button>
             </header>
@@ -89,30 +158,33 @@ export default function RegistroCaraPage() {
                 <div className="w-full max-w-4xl mx-auto glass-panel rounded-[2rem] p-8 md:p-12 flex flex-col items-center text-center space-y-8 shadow-2xl">
                     <div className="space-y-6">
                         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-[11px] font-semibold tracking-wider uppercase text-slate-400">
-                            Registro de Usuario
+                            Fase Final de Seguridad
                         </div>
-                        <div className="space-y-3">
-                            <h1 className="text-3xl md:text-5xl font-bold text-white tracking-tight leading-tight">
-                                Captura de Foto de Referencia Biométrica
-                            </h1>
-                            <p className="text-slate-400 text-lg font-light max-w-xl mx-auto leading-relaxed">
-                                Posiciona tu rostro dentro del círculo y mira a la cámara para iniciar el registro
-                            </p>
-                        </div>
+                        <h1 className="text-3xl md:text-5xl font-bold text-white tracking-tight">
+                            Captura de Rostro <span className="text-[#10B981]">Biométrica</span>
+                        </h1>
                     </div>
 
                     <div className="relative w-full max-w-[560px]">
-                        <div className="w-full aspect-[4/3] bg-black rounded-3xl overflow-hidden relative shadow-2xl border border-slate-700/50 flex items-center justify-center">
-                            {/* Placeholder for camera preview with grain effect */}
-                            <div className="absolute inset-0 bg-slate-900/50 flex items-center justify-center">
-                                <span className="material-icons-outlined text-slate-700 text-9xl">face</span>
-                            </div>
+                        <div className="w-full aspect-[4/3] bg-black rounded-3xl overflow-hidden relative shadow-2xl border border-slate-700/50">
+                            
+                            {/* VIDEO REAL DE LA CÁMARA */}
+                            <video 
+                                ref={videoRef} 
+                                autoPlay 
+                                playsInline 
+                                className="w-full h-full object-cover scale-x-[-1]" 
+                            />
 
-                            <div className="absolute inset-0 bg-radial-gradient(circle, transparent 30%, rgba(15, 23, 42, 0.7) 100%) pointer-events-none"></div>
+                            {/* Canvas oculto para procesar la foto */}
+                            <canvas ref={canvasRef} className="hidden" />
 
-                            <div className="absolute top-6 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1 bg-black/60 backdrop-blur-md rounded-full border border-white/10">
+                            <div className="absolute inset-0 bg-radial-gradient(circle, transparent 30%, rgba(15, 23, 42, 0.4) 100%) pointer-events-none"></div>
+
+                            {/* UI de Escaneo sobre el video */}
+                            <div className="absolute top-6 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1 bg-black/60 backdrop-blur-md rounded-full border border-white/10 z-30">
                                 <span className="w-2 h-2 rounded-full bg-[#10B981] shadow-[0_0_8px_#10B981] animate-pulse"></span>
-                                <span className="text-[10px] font-bold tracking-widest text-white/90 uppercase">En Vivo</span>
+                                <span className="text-[10px] font-bold tracking-widest text-white/90 uppercase">Sensor Activo</span>
                             </div>
 
                             <div className="corner-border corner-tl"></div>
@@ -120,46 +192,25 @@ export default function RegistroCaraPage() {
                             <div className="corner-border corner-bl"></div>
                             <div className="corner-border corner-br"></div>
 
-                            {/* Scanning Animation Line */}
-                            <div className="absolute left-0 w-full h-0.5 bg-[#10B981]/50 shadow-[0_0_10px_#10B981] animate-scan-line pointer-events-none"></div>
-
-                            <button className="absolute bottom-16 flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-full text-white text-sm font-medium transition-all shadow-lg">
-                                <span className="material-icons-round text-lg">center_focus_strong</span>
-                                Ajusta tu posición
-                            </button>
+                            {/* Linea de escaneo animada */}
+                            <div className="absolute left-0 w-full h-0.5 bg-[#10B981]/50 shadow-[0_0_10px_#10B981] animate-scan-line pointer-events-none z-20"></div>
                         </div>
                     </div>
 
                     <div className="pt-4 w-full md:w-auto">
                         <button
-                            onClick={() => router.push('/registro-cara/validar')}
-                            className="group relative inline-flex items-center gap-3 px-10 py-5 bg-gradient-to-br from-[#10B981] to-[#059669] hover:from-[#34D399] hover:to-[#10B981] rounded-2xl text-white font-bold text-lg shadow-[0_8px_30px_rgba(16,185,129,0.3)] transition-all hover:-translate-y-1 active:translate-y-0 w-full md:min-w-[340px] justify-center"
+                            onClick={handleCaptureAndUpload}
+                            disabled={isLoading}
+                            className={`group relative inline-flex items-center gap-3 px-10 py-5 bg-gradient-to-br from-[#10B981] to-[#059669] rounded-2xl text-white font-bold text-lg shadow-lg transition-all hover:-translate-y-1 w-full md:min-w-[340px] justify-center ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
-                            <span className="material-icons-round text-2xl">photo_camera</span>
-                            <span>Capturar Foto de Referencia</span>
-                        </button>
-                    </div>
-
-                    <div className="flex items-center gap-6 text-sm text-slate-500 pt-2 font-medium">
-                        <button className="flex items-center gap-2 hover:text-[#10B981] transition-colors">
-                            <span className="material-icons-outlined text-lg">settings</span>
-                            Configuración
-                        </button>
-                        <span className="text-slate-700">|</span>
-                        <button className="flex items-center gap-2 hover:text-[#10B981] transition-colors">
-                            <span className="material-icons-outlined text-lg">help_outline</span>
-                            Ayuda
+                            <span className="material-icons-round text-2xl">
+                                {isLoading ? 'sync' : 'photo_camera'}
+                            </span>
+                            <span>{isLoading ? 'Procesando Biometría...' : 'Capturar Foto de Referencia'}</span>
                         </button>
                     </div>
                 </div>
             </main>
-
-            <footer className="w-full py-8 text-center mt-auto">
-                <div className="inline-flex items-center gap-2 text-xs text-slate-500/80 uppercase tracking-widest font-semibold cursor-default">
-                    <span className="material-icons-outlined text-[14px]">lock</span>
-                    <span>Cifrado de extremo a extremo • 2FA Activado</span>
-                </div>
-            </footer>
         </div>
     )
 }

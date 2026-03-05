@@ -1,148 +1,204 @@
-'use client'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+'use client';
+
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/Button';
+import OnboardingSidebar from '@/components/layout/OnboardingSidebar';
+import PasswordStrength from '@/components/PasswordStrength';
 
 export default function CrearCuentaPage() {
-    const router = useRouter()
+    const router = useRouter();
     const [formData, setFormData] = useState({
-        nombre: '',
+        nombre_completo: '',
         email: '',
         password: ''
-    })
-    const [showPassword, setShowPassword] = useState(false)
+    });
+    const [isLoading, setIsLoading] = useState(false);
+    const [isPasswordValid, setIsPasswordValid] = useState(false);
+    const [emailError, setEmailError] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [isSuccess, setIsSuccess] = useState(false);
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault()
-        router.push('/verificar-sms')
-    }
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+        
+        // Limpiar error de email al escribir
+        if (name === 'email') setEmailError('');
+    };
+
+    const validateEmail = () => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (formData.email && !emailRegex.test(formData.email)) {
+            setEmailError('El formato del correo no es válido (ejemplo: usuario@empresa.com)');
+            return false;
+        }
+        setEmailError('');
+        return true;
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!isPasswordValid) {
+            alert("La contraseña no cumple con los requisitos de seguridad.");
+            return;
+        }
+        if (!validateEmail()) {
+            return;
+        }
+
+        setIsLoading(true);
+
+        try {
+            const response = await fetch('http://localhost:8000/api/v1/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ...formData,
+                    rol: 'GERENTE'
+                }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                localStorage.setItem('id_usuario_actual', data.id_usuario);
+                setIsSuccess(true); // Activa la animación de éxito
+                setTimeout(() => {
+                    router.push('/verificar-sms');
+                }, 2500); // Retraso extendido para apreciar el feedback
+            } else {
+                alert(`Error en el registro: ${data.detail || 'Ocurrió un error.'}`);
+            }
+        } catch (error) {
+            console.error("Error de conexión:", error);
+            alert("No se pudo conectar con el servidor. Intente más tarde.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const isFormIncomplete = !formData.nombre_completo || !formData.email || !formData.password || !!emailError;
 
     return (
-        <div className="min-h-screen flex flex-col relative overflow-hidden bg-[#0B1120]">
-            {/* Glow Background Gradient */}
-            <div className="absolute inset-0 z-0 bg-glow-gradient"></div>
+        <div className="min-h-screen flex bg-[#0B1120] relative overflow-hidden selection:bg-[#10B981] selection:text-white">
+            <div className="absolute top-0 right-0 w-full h-full overflow-hidden pointer-events-none z-0">
+                <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-[#10B981]/10 rounded-full blur-[120px]"></div>
+                <div className="absolute bottom-[-10%] left-[20%] w-[400px] h-[400px] bg-emerald-500/5 rounded-full blur-[100px]"></div>
+            </div>
 
-            {/* Official Header */}
-            <header className="w-full px-6 py-6 flex justify-between items-center relative z-10">
-                <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 flex items-center justify-center">
-                        <img src="/logo.png" alt="Validex Logo" className="w-full h-full object-contain" />
-                    </div>
-                    <h1 className="text-xl font-bold tracking-tight text-white">
-                        Validex <span className="text-[#10b981]">UP</span>
-                    </h1>
-                </div>
-                <button className="px-5 py-2 rounded-full bg-slate-800 border border-slate-700 hover:bg-slate-700 text-sm font-medium text-slate-300 transition-all shadow-sm">
-                    Soporte
-                </button>
-            </header>
+            <OnboardingSidebar />
 
-            {/* Main Card */}
-            <main className="flex-grow flex items-center justify-center px-4 py-12 relative z-10">
-                <div className="relative">
-                    <div className="premium-glow absolute -top-20 -left-20 scale-150 opacity-70"></div>
-                    <div className="premium-glow absolute -bottom-20 -right-20 scale-150 opacity-40"></div>
-
-                    <div className="w-full max-w-md glass-card p-8 sm:p-10 transform transition-all hover:scale-[1.002] relative z-10">
-                        <div className="flex flex-col items-center text-center mb-8">
-                            <div className="w-14 h-14 rounded-full bg-[#10b981]/10 flex items-center justify-center mb-5 ring-1 ring-[#10b981]/20">
-                                <span className="material-icons-outlined text-[#10b981] text-3xl">person_add</span>
+            <main className="flex-1 flex flex-col items-center justify-start p-6 pt-8 sm:px-12 pb-12 relative z-10">
+                {/* Stepper */}
+                <div className="w-full max-w-md mb-6 relative">
+                    <div className="flex items-center justify-between relative">
+                        <div className="absolute top-1/2 left-0 w-full h-0.5 bg-slate-800 -z-10"></div>
+                        <div className="flex flex-col items-center gap-2 relative bg-[#0B1120] px-3">
+                            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/4 w-14 h-14 bg-[#10B981]/25 rounded-full blur-xl animate-pulse"></div>
+                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#10B981] to-emerald-600 text-white flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.5)] border-2 border-[#10B981]/20 z-10">
+                                <span className="material-icons-round text-xl">person_add</span>
                             </div>
-                            <h2 className="text-2xl font-bold text-white mb-2 tracking-tight">Crea tu Cuenta</h2>
-                            <p className="text-slate-400 text-sm leading-relaxed max-w-xs mx-auto">
-                                Regístrate para comenzar el proceso de verificación biométrica de Validex UP.
+                            <span className="text-[10px] font-bold tracking-[0.2em] text-white uppercase mt-1">Registro</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-2 bg-[#0B1120] px-3 text-slate-600">
+                            <div className="w-10 h-10 rounded-full border border-slate-800 flex items-center justify-center bg-[#0B1120]/50"><span className="material-icons-round text-lg">smartphone</span></div>
+                            <span className="text-[10px] font-bold tracking-[0.2em] uppercase">SMS</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-2 bg-[#0B1120] px-3 text-slate-600">
+                            <div className="w-10 h-10 rounded-full border border-slate-800 flex items-center justify-center bg-[#0B1120]/50"><span className="material-icons-outlined text-lg">face</span></div>
+                            <span className="text-[10px] font-bold tracking-[0.2em] uppercase">Cara</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Contenedor Principal Split (Formulario Izq | Validaciones Der) */}
+                <div className={`w-full max-w-5xl flex flex-col lg:flex-row gap-12 items-start justify-center transition-all duration-700 ease-in-out ${isSuccess ? 'opacity-0 translate-x-24 blur-sm' : 'animate-in fade-in slide-in-from-bottom-6'}`}>
+                    
+                    {/* Columna Izquierda: Formulario */}
+                    <div className="w-full max-w-md space-y-8 flex-1">
+                        <div className="text-center lg:text-left space-y-3">
+                            <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tight uppercase leading-tight">
+                                Crear Cuenta <br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-[#10B981] to-emerald-400">Corporativa</span>
+                            </h2>
+                            <p className="text-slate-400 text-base leading-relaxed font-medium">
+                                Inicie el proceso de alta para acceder al panel de seguridad de Validex.
                             </p>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="space-y-5">
-                            {/* Nombre Completo */}
+                        <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="space-y-2">
-                                <label className="block text-sm font-medium text-slate-300">Nombre Completo</label>
-                                <div className="relative group">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <span className="material-icons-outlined text-slate-500 group-focus-within:text-[#10b981] transition-colors">badge</span>
-                                    </div>
-                                    <input
-                                        className="block w-full pl-10 pr-3 py-3 bg-[#0f1623] border border-slate-700 rounded-lg text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-[#10b981] focus:border-transparent transition-all sm:text-sm"
-                                        placeholder="Ej. Juan Pérez"
-                                        required
-                                        type="text"
-                                        value={formData.nombre}
-                                        onChange={e => setFormData({ ...formData, nombre: e.target.value })}
-                                    />
-                                </div>
+                                <label className="text-[10px] uppercase tracking-[0.3em] font-black text-slate-500 ml-1">Nombre Completo</label>
+                                <input name="nombre_completo" type="text" value={formData.nombre_completo} onChange={handleChange} required className="w-full h-14 bg-transparent border border-slate-800 rounded-xl text-white px-5 focus:outline-none focus:ring-2 focus:ring-[#10B981]/40 focus:border-[#10B981] text-base font-medium transition-all" />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] uppercase tracking-[0.3em] font-black text-slate-500 ml-1">Email Corporativo</label>
+                                <input 
+                                    name="email" 
+                                    type="email" 
+                                    value={formData.email} 
+                                    onChange={handleChange} 
+                                    onBlur={validateEmail}
+                                    required 
+                                    className={`w-full h-14 bg-transparent border rounded-xl text-white px-5 focus:outline-none focus:ring-2 text-base font-medium transition-all ${emailError ? 'border-red-500 focus:ring-red-500/40' : 'border-slate-800 focus:ring-[#10B981]/40 focus:border-[#10B981]'}`} 
+                                />
+                                {emailError && <p className="text-red-400 text-xs font-bold ml-1 animate-pulse">{emailError}</p>}
                             </div>
 
-                            {/* Email */}
                             <div className="space-y-2">
-                                <label className="block text-sm font-medium text-slate-300">Correo Electrónico</label>
-                                <div className="relative group">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <span className="material-icons-outlined text-slate-500 group-focus-within:text-[#10b981] transition-colors">mail</span>
-                                    </div>
-                                    <input
-                                        className="block w-full pl-10 pr-3 py-3 bg-[#0f1623] border border-slate-700 rounded-lg text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-[#10b981] focus:border-transparent transition-all sm:text-sm"
-                                        placeholder="usuario@validex.com"
-                                        required
-                                        type="email"
-                                        value={formData.email}
-                                        onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                <label className="text-[10px] uppercase tracking-[0.3em] font-black text-slate-500 ml-1">Contraseña Segura</label>
+                                <div className="relative">
+                                    <input 
+                                        name="password" 
+                                        type={showPassword ? "text" : "password"} 
+                                        value={formData.password} 
+                                        onChange={handleChange} 
+                                        required 
+                                        className="w-full h-14 bg-transparent border border-slate-800 rounded-xl text-white px-5 pr-12 focus:outline-none focus:ring-2 focus:ring-[#10B981]/40 focus:border-[#10B981] text-base font-medium transition-all" 
                                     />
-                                </div>
-                            </div>
-
-                            {/* Contraseña */}
-                            <div className="space-y-2">
-                                <label className="block text-sm font-medium text-slate-300">Contraseña</label>
-                                <div className="relative group">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <span className="material-icons-outlined text-slate-500 group-focus-within:text-[#10b981] transition-colors">lock</span>
-                                    </div>
-                                    <input
-                                        className="block w-full pl-10 pr-10 py-3 bg-[#0f1623] border border-slate-700 rounded-lg text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-[#10b981] focus:border-transparent transition-all sm:text-sm tracking-widest"
-                                        required
-                                        type={showPassword ? 'text' : 'password'}
-                                        value={formData.password}
-                                        onChange={e => setFormData({ ...formData, password: e.target.value })}
-                                    />
-                                    <button
-                                        type="button"
+                                    <button 
+                                        type="button" 
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer z-10"
+                                        className="absolute inset-y-0 right-0 z-10 flex items-center pr-4 text-slate-400 hover:text-white transition-colors"
+                                        aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                                     >
-                                        <span className="material-icons-outlined text-slate-500 hover:text-[#10b981] transition-colors">
-                                            {showPassword ? "visibility" : "visibility_off"}
-                                        </span>
+                                        <span className="material-icons-round">{showPassword ? 'visibility_off' : 'visibility'}</span>
                                     </button>
                                 </div>
                             </div>
 
-                            <button
-                                id="signup-submit"
+                            <Button
                                 type="submit"
-                                className="w-full flex justify-center items-center gap-2 py-3.5 px-4 border border-transparent rounded-full shadow-glow-emerald text-sm font-bold text-white bg-[#10b981] hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-[#10b981] transition-all duration-200 btn-glow mt-4"
+                                fullWidth
+                                isLoading={isLoading && !isSuccess}
+                                disabled={isLoading || isFormIncomplete || !isPasswordValid || isSuccess}
+                                className={`h-14 font-black uppercase tracking-[0.2em] rounded-2xl text-base transition-all duration-500 !mt-6 ${
+                                    isSuccess 
+                                    ? '!bg-[#10B981] !border-[#10B981] !text-white scale-105 shadow-[0_0_40px_rgba(16,185,129,0.6)] animate-pulse' 
+                                    : 'shadow-glow-emerald hover:scale-[1.02] active:scale-[0.98]'
+                                }`}
                             >
-                                Registrarse ahora
-                                <span className="material-icons-outlined text-lg">arrow_forward</span>
-                            </button>
+                                {isSuccess ? (
+                                    <div className="flex items-center gap-3 animate-in zoom-in duration-300">
+                                        <span className="material-icons-round text-2xl">verified_user</span>
+                                        <span>¡Acceso Nivel 1 Autorizado!</span>
+                                    </div>
+                                ) : (
+                                    <span>Validar Credenciales</span>
+                                )}
+                            </Button>
                         </form>
+                    </div>
 
-                        <div className="mt-8 text-center">
-                            <p className="text-sm text-slate-500">
-                                ¿Ya tienes cuenta?{' '}
-                                <button onClick={() => router.push('/')} className="text-[#10b981] font-bold hover:underline">
-                                    Inicia sesión
-                                </button>
-                            </p>
-                        </div>
+                    {/* Columna Derecha: Panel de Seguridad (Alado) */}
+                    <div className="w-full max-w-md lg:w-80 lg:mt-10 p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
+                        <h3 className="text-white font-bold text-sm uppercase tracking-wider mb-4 flex items-center gap-2">
+                            <span className="material-icons-round text-[#10B981]">security</span> Requisitos de Seguridad
+                        </h3>
+                        <PasswordStrength password={formData.password} onValidationChange={setIsPasswordValid} />
                     </div>
                 </div>
             </main>
-
-            <footer className="w-full py-8 text-center relative z-10">
-                <p className="text-xs text-slate-600 font-medium tracking-wide">
-                    Validex UP © 2026. Todos los derechos reservados.
-                </p>
-            </footer>
         </div>
-    )
+    );
 }

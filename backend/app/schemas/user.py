@@ -1,19 +1,20 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from typing import Optional
 from datetime import datetime
+from app.models.usuarios import RolUsuario
 
-# Propiedades compartidas
+# 1. Propiedades compartidas (Lo que siempre lleva un usuario)
 class UsuarioBase(BaseModel):
-    username: str
+    email: EmailStr  # Usamos EmailStr para validar que tenga @ y .com
     nombre_completo: str
-    rol: str = "GERENTE"
+    rol: RolUsuario = RolUsuario.GERENTE
 
-# Propiedades para crear (recibidas en el Request Body)
+# 2. Propiedades para el Registro (Request)
 class UsuarioCreate(UsuarioBase):
     password: str
     telefono: Optional[str] = None
 
-# Propiedades para retornar por API (sin mostrar contraseñas)
+# 3. Propiedades para la Respuesta de la API (Response)
 class UsuarioOut(UsuarioBase):
     id_usuario: int
     telefono: Optional[str] = None
