@@ -12,18 +12,70 @@ export default function RegistroCaraPage() {
     const [stream, setStream] = useState<MediaStream | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [userId, setUserId] = useState<string | null>(null);
+    const [feedback, setFeedback] = useState("Iniciando sensores...");
+    const [feedbackStatus, setFeedbackStatus] = useState<'default' | 'warning' | 'success'>('default');
 
     useEffect(() => {
+        // --- 🛡️ INICIO: GUARDIA DE SEGURIDAD DE RUTA ---
         const savedId = localStorage.getItem('id_usuario_actual');
-        if (!savedId) router.push('/crear-cuenta');
-        else setUserId(savedId);
+        const registrationStep = localStorage.getItem('registration_step');
+
+        // Si no hay un ID de usuario o si el paso de registro no es el correcto ('face'),
+        // significa que el usuario está intentando acceder a esta URL directamente.
+        // Lo redirigimos al inicio del flujo para forzar el proceso secuencial.
+        if (!savedId || registrationStep !== 'face') {
+            router.push('/crear-cuenta');
+            return; // Detenemos la ejecución para evitar que la cámara se inicie
+        }
+        // --- 🛡️ FIN: GUARDIA DE SEGURIDAD DE RUTA ---
+
+        setUserId(savedId);
 
         startCamera();
         // Limpieza al cerrar la página
         return () => {
             if (stream) stream.getTracks().forEach(track => track.stop());
         }
-    }, []);
+    }, [router]);
+
+    // 🛠️ NUEVO: Análisis de entorno en tiempo real (Iluminación)
+    useEffect(() => {
+        if (!stream) return;
+        
+        const interval = setInterval(analyzeEnvironment, 800); // Analizar cada 800ms
+        return () => clearInterval(interval);
+    }, [stream]);
+
+    const analyzeEnvironment = () => {
+        const video = videoRef.current;
+        const canvas = canvasRef.current;
+        if (!video || !canvas) return;
+
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        if (!ctx) return;
+
+        // Analizamos un cuadro pequeño (50x50) para rendimiento
+        ctx.drawImage(video, 0, 0, 50, 50);
+        const imageData = ctx.getImageData(0, 0, 50, 50);
+        const data = imageData.data;
+        
+        let totalBrightness = 0;
+        for (let i = 0; i < data.length; i += 4) {
+            totalBrightness += (data[i] + data[i + 1] + data[i + 2]) / 3;
+        }
+        const avgBrightness = totalBrightness / (data.length / 4);
+
+        if (avgBrightness < 40) {
+            setFeedback("⚠️ Muy oscuro. Busca más luz.");
+            setFeedbackStatus('warning');
+        } else if (avgBrightness > 220) {
+            setFeedback("⚠️ Demasiado brillo. Evita el contraluz.");
+            setFeedbackStatus('warning');
+        } else {
+            setFeedback("✅ Condiciones óptimas. Coloca tu rostro.");
+            setFeedbackStatus('success');
+        }
+    };
 
     const startCamera = async () => {
         try {
@@ -50,6 +102,14 @@ export default function RegistroCaraPage() {
         context?.drawImage(video, 0, 0);
         
         const photoBase64 = canvas.toDataURL('image/jpeg', 0.8);
+        const cleanBase64 = photoBase64.replace(/^data:image\/\w+;base64,/, "");
+
+        const body = {
+            user_id: parseInt(userId),
+            image_data: cleanBase64
+        };
+
+        console.log("Cuerpo enviado:", body);
 
         try {
             // 🛠️ CAMBIO 1: URL limpia.
@@ -59,19 +119,19 @@ export default function RegistroCaraPage() {
                 headers: { 'Content-Type': 'application/json' },
                 // 🛠️ CAMBIO 2: Objeto JSON unificado.
                 // Ajustamos las claves para que coincidan EXACTAMENTE con el esquema Pydantic del backend.
-                body: JSON.stringify({
-                    user_id: parseInt(userId), // Antes 'id_usuario'. Backend espera 'user_id'.
-                    image_data: photoBase64    // Antes 'face_data'. Backend espera 'image_data'.
-                }),
+                body: JSON.stringify(body),
             });
 
             if (response.ok) {
                 router.push('/dashboard'); // O la ruta final que desees
             } else {
-                alert("Error al registrar rostro. Intenta de nuevo.");
+                const errorData = await response.json();
+                console.error("Error del servidor:", errorData);
+                alert(`Error al registrar rostro: ${errorData.detail || "Intenta de nuevo"}`);
             }
         } catch (error) {
-            console.error("Error:", error);
+            console.error("Error de red:", error);
+            alert("Error de conexión con el servidor.");
         } finally {
             setIsLoading(false);
         }
@@ -79,7 +139,7 @@ export default function RegistroCaraPage() {
     // ------------------------
 
     return (
-        <div className="min-h-screen flex flex-col bg-[#0B1120] text-slate-300 font-sans selection:bg-[#10B981] selection:text-white">
+        <div className="h-screen flex flex-col bg-[#0B1120] text-slate-300 font-sans selection:bg-[#10B981] selection:text-white overflow-hidden">
             <style jsx global>{`
                 .glass-panel {
                     background-color: rgba(15, 22, 35, 0.8);
@@ -111,7 +171,7 @@ export default function RegistroCaraPage() {
                 }
             `}</style>
 
-            <header className="w-full px-6 py-6 border-b border-white/5 flex flex-col md:flex-row items-center justify-between relative z-20 bg-[#0B111D]/80 backdrop-blur-xl">
+            <header className="flex-none w-full px-6 py-3 border-b border-white/5 flex flex-col md:flex-row items-center justify-between relative z-20 bg-[#0B111D]/80 backdrop-blur-xl">
                 <div className="flex items-center space-x-3 cursor-pointer mb-8 md:mb-0" onClick={() => router.push('/')}>
                     <div className="w-10 h-10 flex items-center justify-center">
                         <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
@@ -154,19 +214,19 @@ export default function RegistroCaraPage() {
                 </button>
             </header>
 
-            <main className="flex-1 flex flex-col items-center justify-center px-4 py-8 md:py-12">
-                <div className="w-full max-w-4xl mx-auto glass-panel rounded-[2rem] p-8 md:p-12 flex flex-col items-center text-center space-y-8 shadow-2xl">
-                    <div className="space-y-6">
+            <main className="flex-1 flex flex-col items-center justify-center p-4 min-h-0">
+                <div className="w-full max-w-4xl h-full max-h-full glass-panel rounded-2xl p-4 md:p-6 flex flex-col items-center text-center space-y-4 shadow-2xl">
+                    <div className="flex-none space-y-2">
                         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-[11px] font-semibold tracking-wider uppercase text-slate-400">
                             Fase Final de Seguridad
                         </div>
-                        <h1 className="text-3xl md:text-5xl font-bold text-white tracking-tight">
+                        <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">
                             Captura de Rostro <span className="text-[#10B981]">Biométrica</span>
                         </h1>
                     </div>
 
-                    <div className="relative w-full max-w-[560px]">
-                        <div className="w-full aspect-[4/3] bg-black rounded-3xl overflow-hidden relative shadow-2xl border border-slate-700/50">
+                    <div className="flex-1 w-full min-h-0 flex items-center justify-center relative">
+                        <div className="relative h-full aspect-[4/3] max-w-full bg-black rounded-2xl overflow-hidden shadow-2xl border border-slate-700/50">
                             
                             {/* VIDEO REAL DE LA CÁMARA */}
                             <video 
@@ -187,6 +247,17 @@ export default function RegistroCaraPage() {
                                 <span className="text-[10px] font-bold tracking-widest text-white/90 uppercase">Sensor Activo</span>
                             </div>
 
+                            {/* Mensaje de guía dinámico */}
+                            <div className="absolute bottom-8 left-0 w-full text-center z-30 pointer-events-none">
+                                <span className={`px-4 py-2 backdrop-blur-md rounded-full text-xs font-medium border transition-all duration-300 ${
+                                    feedbackStatus === 'warning' ? 'bg-amber-500/20 border-amber-500/50 text-amber-200' :
+                                    feedbackStatus === 'success' ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-200' :
+                                    'bg-black/60 border-white/10 text-white/90'
+                                }`}>
+                                    {feedback}
+                                </span>
+                            </div>
+
                             <div className="corner-border corner-tl"></div>
                             <div className="corner-border corner-tr"></div>
                             <div className="corner-border corner-bl"></div>
@@ -197,7 +268,7 @@ export default function RegistroCaraPage() {
                         </div>
                     </div>
 
-                    <div className="pt-4 w-full md:w-auto">
+                    <div className="flex-none pt-2 w-full md:w-auto">
                         <button
                             onClick={handleCaptureAndUpload}
                             disabled={isLoading}

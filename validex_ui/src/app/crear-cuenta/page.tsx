@@ -63,6 +63,7 @@ export default function CrearCuentaPage() {
 
             if (response.ok) {
                 localStorage.setItem('id_usuario_actual', data.id_usuario);
+                localStorage.setItem('registration_step', 'sms'); // 🛠️ FIX: Guardamos el paso actual
                 setIsSuccess(true); // Activa la animación de éxito
                 setTimeout(() => {
                     router.push('/verificar-sms');
