@@ -101,6 +101,8 @@ export default function RegisterSMSPage() {
 
             // 🛠️ CAMBIO AQUÍ: Usamos data.status porque así responde tu Python
             if (response.ok && data.status === "SMS_VERIFIED") {
+                // 🛠️ FIX: Autorizamos el paso a la cámara antes de redirigir
+                localStorage.setItem('registration_step', 'face');
                 router.push(`/verificar-sms/correcta?phone=${phone}&code=${fullCode}`);
             } else {
                 router.push(`/verificar-sms/fallida?phone=${phone}`);

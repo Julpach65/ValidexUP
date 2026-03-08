@@ -8,9 +8,22 @@ export default function LoginPage() {
   const [password, setPassword] = useState('secretpassword')
   const [showPassword, setShowPassword] = useState(false)
 
+  // --- LÓGICA DE COOKIE/POLÍTICA AGREGADA ---
+  const [showCameraModal, setShowCameraModal] = useState(false)
+
+  const handleCreateAccountClick = () => {
+    setShowCameraModal(true)
+  }
+
+  const handleAcceptPolicies = () => {
+    localStorage.setItem('politica_camara_aceptada', 'true')
+    setShowCameraModal(false)
+    router.push('/crear-cuenta')
+  }
+  // ------------------------------------------
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // En el diseño original, el login redirige a verificar-sms
     router.push('/verificar-sms')
   }
 
@@ -117,11 +130,10 @@ export default function LoginPage() {
               </button>
             </form>
 
-            {/* Create Account Link (not in original html but added for UX) */}
             <div className="mt-8 text-center">
               <p className="text-sm text-slate-500">
                 ¿No tienes cuenta?{' '}
-                <button onClick={() => router.push('/crear-cuenta')} className="text-[#10b981] font-bold hover:underline">
+                <button onClick={handleCreateAccountClick} className="text-[#10b981] font-bold hover:underline">
                   Crear cuenta
                 </button>
               </p>
@@ -129,6 +141,43 @@ export default function LoginPage() {
           </div>
         </div>
       </main>
+
+      {/* --- MODAL DE POLÍTICAS (Tu diseño favorito) --- */}
+      {showCameraModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="w-full max-w-sm bg-[#0f172a] border border-[#10b981]/30 rounded-[2rem] p-8 shadow-[0_0_50px_rgba(16,185,129,0.1)] animate-in zoom-in-95 duration-200">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center mb-6 ring-2 ring-emerald-500/20">
+                <span className="material-icons-round text-emerald-500 text-4xl">videocam</span>
+              </div>
+              
+              <h3 className="text-xl font-bold text-white mb-4">Políticas de Seguridad</h3>
+              
+              <p className="text-slate-400 text-sm leading-relaxed mb-8">
+                Para continuar con el registro en <span className="text-white font-semibold">VALIDEX UP</span>, es obligatorio el uso de la cámara para la verificación biométrica. 
+                <br /><br />
+                ¿Aceptas activar tus sensores para proceder?
+              </p>
+
+              <div className="flex flex-col w-full gap-3">
+                <button 
+                  onClick={handleAcceptPolicies}
+                  className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-[#0B1120] font-black rounded-xl transition-all uppercase tracking-widest text-xs"
+                >
+                  Aceptar y Continuar
+                </button>
+                
+                <button 
+                  onClick={() => setShowCameraModal(false)}
+                  className="w-full py-4 bg-transparent border border-slate-700 text-slate-500 hover:text-slate-300 font-bold rounded-xl transition-all text-xs uppercase"
+                >
+                  Rechazar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <footer className="w-full py-8 text-center relative z-10">
         <p className="text-xs text-slate-600 font-medium tracking-wide">

@@ -16,16 +16,27 @@ export default function RegistroCaraPage() {
     const [feedbackStatus, setFeedbackStatus] = useState<'default' | 'warning' | 'success'>('default');
 
     useEffect(() => {
+        // --- 🛡️ INICIO: GUARDIA DE SEGURIDAD DE RUTA ---
         const savedId = localStorage.getItem('id_usuario_actual');
-        if (!savedId) router.push('/crear-cuenta');
-        else setUserId(savedId);
+        const registrationStep = localStorage.getItem('registration_step');
+
+        // Si no hay un ID de usuario o si el paso de registro no es el correcto ('face'),
+        // significa que el usuario está intentando acceder a esta URL directamente.
+        // Lo redirigimos al inicio del flujo para forzar el proceso secuencial.
+        if (!savedId || registrationStep !== 'face') {
+            router.push('/crear-cuenta');
+            return; // Detenemos la ejecución para evitar que la cámara se inicie
+        }
+        // --- 🛡️ FIN: GUARDIA DE SEGURIDAD DE RUTA ---
+
+        setUserId(savedId);
 
         startCamera();
         // Limpieza al cerrar la página
         return () => {
             if (stream) stream.getTracks().forEach(track => track.stop());
         }
-    }, []);
+    }, [router]);
 
     // 🛠️ NUEVO: Análisis de entorno en tiempo real (Iluminación)
     useEffect(() => {
