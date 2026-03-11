@@ -3,10 +3,10 @@
 import { useRouter } from 'next/navigation'
 import React, { useRef, useState, useEffect } from 'react'
 
-export default function RegistroCaraPage() {
+export default function LoginCaraPage() {
     const router = useRouter()
     
-    // --- ESTADOS ---
+    // --- ESTADOS DE CÁMARA ---
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [stream, setStream] = useState<MediaStream | null>(null);
@@ -15,21 +15,20 @@ export default function RegistroCaraPage() {
     const [feedback, setFeedback] = useState("Iniciando sensores...");
     const [feedbackStatus, setFeedbackStatus] = useState<'default' | 'warning' | 'success'>('default');
 
-    // 1. Seguridad: Verificar que el usuario viene del paso anterior (SMS)
+    // 1. Seguridad: Solo verificamos que exista un usuario intentando entrar.
+    // NO verificamos 'registration_step' porque esto es un login, no un registro.
     useEffect(() => {
         const savedId = localStorage.getItem('id_usuario_actual');
-        const registrationStep = localStorage.getItem('registration_step');
         
-        // Si no está en proceso de registro, lo mandamos al inicio
-        if (!savedId || registrationStep !== 'face') {
-            console.warn("[Auth Guard] Flujo de registro no válido.");
-            router.push('/crear-cuenta');
+        if (!savedId) {
+            console.warn("[Auth Guard] No hay usuario identificado. Volviendo al login.");
+            router.push('/login'); 
             return; 
         }
         setUserId(savedId);
     }, [router]);
 
-    // 2. Ciclo de vida de la cámara
+    // 2. Encender cámara al entrar y apagar al salir
     useEffect(() => {
         startCamera();
         return () => {
@@ -40,7 +39,7 @@ export default function RegistroCaraPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // 3. Análisis de Iluminación
+    // 3. Análisis de luz (UX)
     useEffect(() => {
         if (!stream) return;
         const interval = setInterval(analyzeEnvironment, 800);
@@ -71,7 +70,7 @@ export default function RegistroCaraPage() {
             setFeedback("⚠️ Demasiado brillo. Evita el contraluz.");
             setFeedbackStatus('warning');
         } else {
-            setFeedback("✅ Condiciones óptimas. Coloca tu rostro.");
+            setFeedback("✅ Listo para verificar.");
             setFeedbackStatus('success');
         }
     };
@@ -85,12 +84,12 @@ export default function RegistroCaraPage() {
             if (videoRef.current) videoRef.current.srcObject = mediaStream;
         } catch (err) {
             console.error("Error cámara:", err);
-            alert("Permite el acceso a la cámara para el registro.");
+            alert("Necesitamos la cámara para verificar tu identidad.");
         }
     };
 
-    // 4. ENVÍO EXCLUSIVO A REGISTRO
-    const handleRegisterFace = async () => {
+    // 4. LÓGICA DE VERIFICACIÓN (Login)
+    const handleVerifyFace = async () => {
         const video = videoRef.current;
         const canvas = canvasRef.current;
         if (!video || !canvas || !userId) return;
@@ -110,24 +109,26 @@ export default function RegistroCaraPage() {
         };
 
         try {
-            // Solo usamos el endpoint de registro
-            const response = await fetch('http://localhost:8000/api/v1/auth/register-face', {
+            // ÚNICO ENDPOINT: Verificación. Nunca Registro.
+            const response = await fetch('http://localhost:8000/api/v1/auth/verify-face-login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body),
             });
 
             if (response.ok) {
-                // Registro completado: Limpiamos el proceso y vamos al dashboard
-                localStorage.removeItem('registration_step');
+                // ÉXITO: Limpiamos banderas y dejamos pasar
+                localStorage.removeItem('registration_step'); 
                 router.push('/dashboard');
             } else {
+                // FALLO: Mostramos error y NO redirigimos
                 const errorData = await response.json();
-                alert(`Error en registro: ${errorData.detail || "No se pudo guardar el rostro"}`);
+                console.error("Fallo de coincidencia:", errorData);
+                alert(`Acceso denegado: ${errorData.detail || "Rostro no reconocido"}`);
             }
         } catch (error) {
             console.error("Error de red:", error);
-            alert("Error de conexión al registrar biometría.");
+            alert("Error de conexión con el servidor.");
         } finally {
             setIsLoading(false);
         }
@@ -146,8 +147,8 @@ export default function RegistroCaraPage() {
                 .animate-scan-line { animation: scan 3s linear infinite; }
             `}</style>
 
-            <header className="flex-none w-full px-6 py-3 border-b border-white/5 flex flex-col md:flex-row items-center justify-between relative z-20 bg-[#0B111D]/80 backdrop-blur-xl">
-                <div className="flex items-center space-x-3 cursor-pointer mb-8 md:mb-0" onClick={() => router.push('/')}>
+            <header className="flex-none w-full px-6 py-3 border-b border-white/5 flex items-center justify-between relative z-20 bg-[#0B111D]/80 backdrop-blur-xl">
+                <div className="flex items-center space-x-3 cursor-pointer" onClick={() => router.push('/')}>
                     <div className="w-10 h-10 flex items-center justify-center">
                         <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
                     </div>
@@ -156,32 +157,13 @@ export default function RegistroCaraPage() {
                     </div>
                 </div>
 
-                {/* STEPPER ACTIVO (Solo se muestra en Registro) */}
-                <div className="w-full max-w-md relative">
-                    <div className="flex items-center justify-between relative">
-                        <div className="absolute top-1/2 left-0 w-full h-0.5 bg-[#10B981]/20 -z-10 transform -translate-y-1/2"></div>
-                        <div className="flex flex-col items-center gap-2 bg-[#0B111D] px-3 text-[#10B981]">
-                            <div className="w-9 h-9 rounded-full border border-[#10B981]/40 flex items-center justify-center bg-[#0B111D]">
-                                <span className="material-icons-round text-lg">check_circle</span>
-                            </div>
-                            <span className="text-[9px] font-black tracking-[0.2em] uppercase">Datos</span>
-                        </div>
-                        <div className="flex flex-col items-center gap-2 bg-[#0B111D] px-3 text-[#10B981]">
-                            <div className="w-9 h-9 rounded-full border border-[#10B981]/40 flex items-center justify-center bg-[#0B111D]">
-                                <span className="material-icons-round text-lg">check_circle</span>
-                            </div>
-                            <span className="text-[9px] font-black tracking-[0.2em] uppercase">SMS</span>
-                        </div>
-                        <div className="flex flex-col items-center gap-2 relative bg-[#0B111D] px-3">
-                            <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#10B981] to-emerald-600 text-white flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.4)] relative z-10">
-                                <span className="material-icons-round text-xl">face</span>
-                            </div>
-                            <span className="text-[9px] font-black tracking-[0.2em] text-white uppercase mt-1">Rostro</span>
-                        </div>
-                    </div>
+                {/* AQUÍ ESTABA EL STEPPER. AHORA SOLO ES UN BADGE INFORMATIVO */}
+                <div className="hidden md:flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-[11px] font-semibold tracking-wider uppercase text-slate-400">
+                    <span className="material-icons-round text-[#10B981] text-sm">lock</span>
+                    Verificación Segura
                 </div>
 
-                <button onClick={() => router.push('/')} className="hidden md:flex px-5 py-2 rounded-lg border border-slate-700 uppercase text-[10px] font-black">
+                <button onClick={() => router.push('/login')} className="px-5 py-2 rounded-lg border border-slate-700 uppercase text-[10px] font-black">
                     Cancelar
                 </button>
             </header>
@@ -189,12 +171,10 @@ export default function RegistroCaraPage() {
             <main className="flex-1 flex flex-col items-center justify-center p-4 min-h-0">
                 <div className="w-full max-w-4xl h-full max-h-full glass-panel rounded-2xl p-4 md:p-6 flex flex-col items-center text-center space-y-4 shadow-2xl">
                     <div className="flex-none space-y-2">
-                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-[11px] font-semibold tracking-wider uppercase text-slate-400">
-                            Alta de Usuario Biométrico
-                        </div>
                         <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">
-                            Registrar <span className="text-[#10B981]">Rostro Maestro</span>
+                            Verificación de <span className="text-[#10B981]">Identidad</span>
                         </h1>
+                        <p className="text-sm text-slate-400">Mira a la cámara para validar tu acceso.</p>
                     </div>
 
                     <div className="flex-1 w-full min-h-0 flex items-center justify-center relative">
@@ -204,9 +184,10 @@ export default function RegistroCaraPage() {
 
                             <div className="absolute inset-0 bg-radial-gradient(circle, transparent 30%, rgba(15, 23, 42, 0.4) 100%) pointer-events-none"></div>
 
+                            {/* UI de Escaneo */}
                             <div className="absolute top-6 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1 bg-black/60 backdrop-blur-md rounded-full border border-white/10 z-30">
                                 <span className="w-2 h-2 rounded-full bg-[#10B981] shadow-[0_0_8px_#10B981] animate-pulse"></span>
-                                <span className="text-[10px] font-bold tracking-widest text-white/90 uppercase">Modo Enrolamiento</span>
+                                <span className="text-[10px] font-bold tracking-widest text-white/90 uppercase">En vivo</span>
                             </div>
 
                             <div className="absolute bottom-8 left-0 w-full text-center z-30 pointer-events-none">
@@ -229,15 +210,15 @@ export default function RegistroCaraPage() {
 
                     <div className="flex-none pt-2 w-full md:w-auto">
                         <button
-                            onClick={handleRegisterFace}
+                            onClick={handleVerifyFace}
                             disabled={isLoading}
                             className={`group relative inline-flex items-center gap-3 px-10 py-5 bg-gradient-to-br from-[#10B981] to-[#059669] rounded-2xl text-white font-bold text-lg shadow-lg transition-all hover:-translate-y-1 w-full md:min-w-[340px] justify-center ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
                             <span className="material-icons-round text-2xl">
-                                {isLoading ? 'sync' : 'add_a_photo'}
+                                {isLoading ? 'sync' : 'fingerprint'}
                             </span>
                             <span>
-                                {isLoading ? 'Guardando Perfil...' : 'Establecer como Rostro de Acceso'}
+                                {isLoading ? 'Verificando...' : 'Ingresar al Sistema'}
                             </span>
                         </button>
                     </div>

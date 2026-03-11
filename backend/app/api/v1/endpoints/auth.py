@@ -157,8 +157,18 @@ def verify_sms(body: VerifySMSRequest, session: Session = Depends(get_session)) 
     sesion_activa.paso_2_sms = True
     session.add(sesion_activa)
     session.commit()
+
+    # VERIFICACIÓN ROBUSTA: Consultamos si el usuario ya tiene biometría
+    user = session.get(Usuario, body.id_usuario)
+    has_face = False
+    if user and user.face:
+        has_face = True
         
-    return {"msg": "Paso 2 completado", "status": "SMS_VERIFIED"}
+    return {
+        "msg": "Paso 2 completado", 
+        "status": "SMS_VERIFIED",
+        "has_face_registered": has_face # <--- Nueva bandera de verdad absoluta
+    }
 
 from sqlmodel import select # Asegúrate de tener esta importación arriba
 

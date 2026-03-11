@@ -99,22 +99,28 @@ export default function RegisterSMSPage() {
 
             const data = await response.json();
 
-            // 🛠️ CAMBIO AQUÍ: Usamos data.status porque así responde tu Python
             if (response.ok && data.status === "SMS_VERIFIED") {
-                // 🛠️ FIX: Autorizamos el paso a la cámara antes de redirigir
-                localStorage.setItem('registration_step', 'face');
-                router.push(`/verificar-sms/correcta?phone=${phone}&code=${fullCode}`);
+                // 🛠️ LÓGICA ROBUSTA (Basada en DB, no en caché):
+                if (data.has_face_registered) {
+                    // El usuario YA tiene rostro -> Va a Login
+                    router.push('/login-cara');
+                } else {
+                    // El usuario NO tiene rostro -> Va a Registro
+                    localStorage.setItem('registration_step', 'face'); 
+                    router.push('/registro-cara');
+                }
             } else {
-                router.push(`/verificar-sms/fallida?phone=${phone}`);
+                const errorData = await response.json();
+                alert(`Error: ${errorData.detail || 'Código incorrecto o expirado.'}`);
             }
         } catch (error) {
             console.error("Error de verificación:", error);
-            router.push(`/verificar-sms/fallida?phone=${phone}`);
+            alert('Error de conexión al verificar el código.');
         } finally {
             setIsLoading(false);
         }
     };
-
+    
     const handleOtpChange = (index: number, value: string) => {
         if (value.length > 1) value = value.slice(-1);
         if (!/^\d*$/.test(value)) return;
