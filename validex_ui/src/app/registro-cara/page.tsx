@@ -12,31 +12,43 @@ export default function RegistroCaraPage() {
     const [stream, setStream] = useState<MediaStream | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [userId, setUserId] = useState<string | null>(null);
+    const [isRegistrationMode, setIsRegistrationMode] = useState(true); // Estado para saber si es registro o login
     const [feedback, setFeedback] = useState("Iniciando sensores...");
     const [feedbackStatus, setFeedbackStatus] = useState<'default' | 'warning' | 'success'>('default');
 
+    // --- EFECTOS DE REACT ---
+
+    // 1. Efecto para la lógica de negocio y seguridad. Se ejecuta UNA VEZ al montar.
     useEffect(() => {
-        // --- 🛡️ INICIO: GUARDIA DE SEGURIDAD DE RUTA ---
         const savedId = localStorage.getItem('id_usuario_actual');
         const registrationStep = localStorage.getItem('registration_step');
+        
+        // CLAVE: Se determina el modo (registro o login) y se guarda en el estado.
+        // Se añade un log para que puedas ver en la consola del navegador por qué se elige cada modo.
+        const isRegister = registrationStep === 'face';
+        console.log(`[MODO BIOMÉTRICO] 'registration_step' es '${registrationStep}'. Modo registro: ${isRegister}`);
+        setIsRegistrationMode(isRegister);
 
-        // Si no hay un ID de usuario o si el paso de registro no es el correcto ('face'),
-        // significa que el usuario está intentando acceder a esta URL directamente.
-        // Lo redirigimos al inicio del flujo para forzar el proceso secuencial.
-        if (!savedId || registrationStep !== 'face') {
-            router.push('/crear-cuenta');
-            return; // Detenemos la ejecución para evitar que la cámara se inicie
+        if (!savedId) {
+            console.warn("[Auth Guard] No se encontró 'id_usuario_actual'. Redirigiendo a crear-cuenta.");
+            router.push('/crear-cuenta'); // Si no hay usuario, no se puede continuar.
+            return; 
         }
-        // --- 🛡️ FIN: GUARDIA DE SEGURIDAD DE RUTA ---
-
         setUserId(savedId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // El array vacío [] asegura que este efecto se ejecute solo una vez.
 
+    // 2. Efecto para manejar el ciclo de vida de la cámara. También se ejecuta UNA VEZ.
+    useEffect(() => {
         startCamera();
-        // Limpieza al cerrar la página
+        // La función de limpieza se ejecutará cuando el componente se desmonte, apagando la cámara.
         return () => {
-            if (stream) stream.getTracks().forEach(track => track.stop());
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
         }
-    }, [router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // El array vacío [] asegura que la cámara se inicie solo una vez.
 
     // 🛠️ NUEVO: Análisis de entorno en tiempo real (Iluminación)
     useEffect(() => {
@@ -112,22 +124,31 @@ export default function RegistroCaraPage() {
         console.log("Cuerpo enviado:", body);
 
         try {
-            // 🛠️ CAMBIO 1: URL limpia.
-            // Eliminamos el ID de la URL (antes era .../register-face/${userId}) para evitar errores 404.
-            const response = await fetch('http://localhost:8000/api/v1/auth/register-face', {
+            // CAMBIO 2: Lógica condicional para el endpoint.
+            // Se usa el estado 'isRegistrationMode' para decidir si registrar o verificar.
+            const endpoint = isRegistrationMode
+                ? 'http://localhost:8000/api/v1/auth/register-face'
+                : 'http://localhost:8000/api/v1/auth/verify-face-login';
+
+            console.log(`Modo de operación: ${isRegistrationMode ? 'REGISTRO' : 'LOGIN'}. Endpoint: ${endpoint}`);
+
+            const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                // 🛠️ CAMBIO 2: Objeto JSON unificado.
-                // Ajustamos las claves para que coincidan EXACTAMENTE con el esquema Pydantic del backend.
                 body: JSON.stringify(body),
             });
 
             if (response.ok) {
+                // Si el registro fue exitoso, limpiamos el marcador para que
+                // futuros logins no intenten registrarse de nuevo.
+                if (isRegistrationMode) {
+                    localStorage.removeItem('registration_step');
+                }
                 router.push('/dashboard'); // O la ruta final que desees
             } else {
                 const errorData = await response.json();
                 console.error("Error del servidor:", errorData);
-                alert(`Error al registrar rostro: ${errorData.detail || "Intenta de nuevo"}`);
+                alert(`Error: ${errorData.detail || "La operación falló"}`);
             }
         } catch (error) {
             console.error("Error de red:", error);
@@ -277,7 +298,13 @@ export default function RegistroCaraPage() {
                             <span className="material-icons-round text-2xl">
                                 {isLoading ? 'sync' : 'photo_camera'}
                             </span>
-                            <span>{isLoading ? 'Procesando Biometría...' : 'Capturar Foto de Referencia'}</span>
+                            {/* CAMBIO 3: Texto del botón dinámico */}
+                            <span>
+                                {isLoading 
+                                    ? 'Procesando Biometría...' 
+                                    : isRegistrationMode ? 'Capturar Foto de Referencia' : 'Verificar Identidad'
+                                }
+                            </span>
                         </button>
                     </div>
                 </div>

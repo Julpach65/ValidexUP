@@ -200,3 +200,60 @@ def register_face(data: FaceRegisterRequest, session: Session = Depends(get_sess
         "status": "success",
         "message": f"Rostro de {user.nombre_completo} registrado y seguridad completada."
     }
+
+    # Seccion de verificar Rostro 
+from app.services.face_service import get_face_embedding, verify_face_match
+from fastapi import status
+
+@router.post("/verify-face-login")
+def verify_face_login(data: FaceRegisterRequest, session: Session = Depends(get_session)):
+    # 1. Intentar extraer el rostro de la imagen enviada
+    current_embedding = get_face_embedding(data.image_data)
+    
+    if not current_embedding:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, 
+            detail="No se detectó ningún rostro. Asegúrate de tener buena iluminación."
+        )
+
+    # 2. Buscar al usuario y verificar si tiene biometría registrada
+    user = session.get(Usuario, data.user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Usuario no encontrado."
+        )
+    
+    if not user.face:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, 
+            detail="El usuario no tiene un rostro registrado en el sistema."
+        )
+
+    # 3. COMPARACIÓN BIOMÉTRICA (El corazón del login)
+    # verify_face_match se encarga de calcular la distancia coseno
+    es_valido = verify_face_match(user.face, current_embedding)
+
+    if not es_valido:
+        # Aquí es donde lanzamos el error que pediste
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, 
+            detail="El rostro no coincide con el usuario. Acceso denegado."
+        )
+
+    # 4. ACTUALIZACIÓN DE SEGURIDAD (Paso 3 completado)
+    statement = select(Sesion).where(
+        Sesion.id_usuario == data.user_id
+    ).order_by(Sesion.id_sesion.desc())
+    
+    db_session = session.exec(statement).first()
+
+    if db_session:
+        db_session.paso_3_face = 1  # Marcamos éxito en la base de datos
+        session.add(db_session)
+        session.commit()
+
+    return {
+        "status": "success", 
+        "message": f"Identidad verificada correctamente. ¡Bienvenido, {user.nombre_completo}!"
+    }
