@@ -100,18 +100,19 @@ export default function RegisterSMSPage() {
             const data = await response.json();
 
             if (response.ok && data.status === "SMS_VERIFIED") {
-                // 🛠️ LÓGICA ROBUSTA (Basada en DB, no en caché):
-                if (data.has_face_registered) {
-                    // El usuario YA tiene rostro -> Va a Login
-                    router.push('/login-cara');
-                } else {
-                    // El usuario NO tiene rostro -> Va a Registro
-                    localStorage.setItem('registration_step', 'face'); 
-                    router.push('/registro-cara');
+                // Determinamos el destino basado en si ya tiene cara registrada
+                const destination = data.has_face_registered ? '/login-cara' : '/registro-cara';
+                
+                if (!data.has_face_registered) {
+                    localStorage.setItem('registration_step', 'face');
                 }
+                
+                // CORRECCIÓN: Redirección directa al destino.
+                // Evitamos la página intermedia que estaba causando el desvío incorrecto a 'crear-cuenta'.
+                router.push(destination);
             } else {
-                const errorData = await response.json();
-                alert(`Error: ${errorData.detail || 'Código incorrecto o expirado.'}`);
+                // Redirección a tu pantalla de fallo
+                router.push('/verificar-sms/fallida');
             }
         } catch (error) {
             console.error("Error de verificación:", error);

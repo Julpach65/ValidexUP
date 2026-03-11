@@ -6,74 +6,50 @@ import React, { useRef, useState, useEffect } from 'react'
 export default function LoginCaraPage() {
     const router = useRouter()
     
-    // --- ESTADOS DE CÁMARA ---
+    // --- ESTADOS ---
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [stream, setStream] = useState<MediaStream | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [userId, setUserId] = useState<string | null>(null);
-    const [feedback, setFeedback] = useState("Iniciando sensores...");
-    const [feedbackStatus, setFeedbackStatus] = useState<'default' | 'warning' | 'success'>('default');
+    
+    // Estados para la animación de éxito
+    const [accessGranted, setAccessGranted] = useState(false);
+    const [userName, setUserName] = useState("");
+    const [systemStatus, setSystemStatus] = useState("Analizando firma biométrica...");
 
-    // 1. Seguridad: Solo verificamos que exista un usuario intentando entrar.
-    // NO verificamos 'registration_step' porque esto es un login, no un registro.
     useEffect(() => {
         const savedId = localStorage.getItem('id_usuario_actual');
-        
         if (!savedId) {
-            console.warn("[Auth Guard] No hay usuario identificado. Volviendo al login.");
             router.push('/login'); 
             return; 
         }
         setUserId(savedId);
     }, [router]);
 
-    // 2. Encender cámara al entrar y apagar al salir
     useEffect(() => {
-        startCamera();
+        if (!accessGranted) startCamera();
         return () => {
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-            }
+            if (stream) stream.getTracks().forEach(track => track.stop());
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [accessGranted]);
 
-    // 3. Análisis de luz (UX)
+    // --- SECUENCIA DE ÉXITO ---
     useEffect(() => {
-        if (!stream) return;
-        const interval = setInterval(analyzeEnvironment, 800);
-        return () => clearInterval(interval);
-    }, [stream]);
+        if (accessGranted) {
+            // 1. Secuencia de mensajes de estado
+            setTimeout(() => setSystemStatus("Coincidencia encontrada ✓"), 1000);
+            setTimeout(() => setSystemStatus("Cargando perfil de seguridad..."), 2000);
 
-    const analyzeEnvironment = () => {
-        const video = videoRef.current;
-        const canvas = canvasRef.current;
-        if (!video || !canvas) return;
-
-        const ctx = canvas.getContext('2d', { willReadFrequently: true });
-        if (!ctx) return;
-
-        ctx.drawImage(video, 0, 0, 50, 50);
-        const data = ctx.getImageData(0, 0, 50, 50).data;
-        
-        let totalBrightness = 0;
-        for (let i = 0; i < data.length; i += 4) {
-            totalBrightness += (data[i] + data[i + 1] + data[i + 2]) / 3;
+            // 2. Limpieza y redirección
+            localStorage.removeItem('registration_step'); 
+            setTimeout(() => {
+                router.push('/dashboard');
+            }, 4000); // Aumentamos el tiempo para disfrutar la animación
         }
-        const avgBrightness = totalBrightness / (data.length / 4);
-
-        if (avgBrightness < 40) {
-            setFeedback("⚠️ Muy oscuro. Busca más luz.");
-            setFeedbackStatus('warning');
-        } else if (avgBrightness > 220) {
-            setFeedback("⚠️ Demasiado brillo. Evita el contraluz.");
-            setFeedbackStatus('warning');
-        } else {
-            setFeedback("✅ Listo para verificar.");
-            setFeedbackStatus('success');
-        }
-    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [accessGranted]);
 
     const startCamera = async () => {
         try {
@@ -84,11 +60,10 @@ export default function LoginCaraPage() {
             if (videoRef.current) videoRef.current.srcObject = mediaStream;
         } catch (err) {
             console.error("Error cámara:", err);
-            alert("Necesitamos la cámara para verificar tu identidad.");
+            alert("Se necesita acceso a la cámara para verificar tu identidad.");
         }
     };
 
-    // 4. LÓGICA DE VERIFICACIÓN (Login)
     const handleVerifyFace = async () => {
         const video = videoRef.current;
         const canvas = canvasRef.current;
@@ -100,31 +75,24 @@ export default function LoginCaraPage() {
         canvas.height = video.videoHeight;
         context?.drawImage(video, 0, 0);
         
-        const photoBase64 = canvas.toDataURL('image/jpeg', 0.8);
-        const cleanBase64 = photoBase64.replace(/^data:image\/\w+;base64,/, "");
-
-        const body = {
-            user_id: parseInt(userId),
-            image_data: cleanBase64
-        };
+        const cleanBase64 = canvas.toDataURL('image/jpeg', 0.8).replace(/^data:image\/\w+;base64,/, "");
 
         try {
-            // ÚNICO ENDPOINT: Verificación. Nunca Registro.
             const response = await fetch('http://localhost:8000/api/v1/auth/verify-face-login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body),
+                body: JSON.stringify({ user_id: parseInt(userId), image_data: cleanBase64 }),
             });
 
+            const data = await response.json();
+
             if (response.ok) {
-                // ÉXITO: Limpiamos banderas y dejamos pasar
-                localStorage.removeItem('registration_step'); 
-                router.push('/dashboard');
+                // --- DISPARAMOS LA SECUENCIA DE BIENVENIDA ---
+                setUserName(data.user_name || "Usuario");
+                setAccessGranted(true);
             } else {
-                // FALLO: Mostramos error y NO redirigimos
-                const errorData = await response.json();
-                console.error("Fallo de coincidencia:", errorData);
-                alert(`Acceso denegado: ${errorData.detail || "Rostro no reconocido"}`);
+                // Si la cara no coincide o hay otro error
+                alert(`Acceso denegado: ${data.detail || "Rostro no reconocido"}`);
             }
         } catch (error) {
             console.error("Error de red:", error);
@@ -134,21 +102,62 @@ export default function LoginCaraPage() {
         }
     };
 
+    // --- VISTA DE ÉXITO (ANIMACIÓN) ---
+    if (accessGranted) {
+        return (
+            <div className="h-screen w-full bg-black flex flex-col items-center justify-center relative overflow-hidden font-mono">
+                {/* Audio para el efecto de sonido */}
+                <audio src="/sounds/access_granted.mp3" autoPlay preload="auto"></audio>
+
+                {/* Fondo animado de rejilla */}
+                <div className="absolute inset-0 opacity-20 bg-[linear-gradient(to_right,#10B981_1px,transparent_1px),linear-gradient(to_bottom,#10B981_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)]"></div>
+                
+                <div className="z-10 flex flex-col items-center text-center animate-in zoom-in-90 duration-500">
+                    
+                    {/* Icono de Check con más efectos */}
+                    <div className="relative mb-8">
+                        <div className="w-28 h-28 rounded-full border-2 border-[#10B981] flex items-center justify-center bg-emerald-900/50 shadow-[0_0_40px_rgba(16,185,129,0.7)]">
+                            <span className="material-icons-round text-7xl text-white animate-in zoom-in-50 delay-500 duration-500">verified_user</span>
+                        </div>
+                        <div className="absolute inset-0 rounded-full border-2 border-[#10B981] animate-ping"></div>
+                        <div className="absolute -inset-2 rounded-full border border-emerald-500/30 animate-pulse delay-500"></div>
+                    </div>
+
+                    {/* Mensajes de estado del sistema */}
+                    <div className="h-8 mb-4">
+                        <p key={systemStatus} className="text-emerald-400 text-sm tracking-widest animate-in fade-in duration-300">
+                            {systemStatus}
+                        </p>
+                    </div>
+
+                    {/* Título y Nombre */}
+                    <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tighter">
+                        Bienvenido, <span className="text-[#10B981]">{userName}</span>
+                    </h1>
+                    
+                    <p className="text-slate-400 mt-2">Acceso autorizado a la plataforma Validex UP.</p>
+
+                    {/* Barra de carga falsa */}
+                    <div className="w-64 h-2 bg-emerald-900/50 rounded-full mt-10 overflow-hidden">
+                        <div className="h-full bg-gradient-to-r from-emerald-500 to-green-400 rounded-full animate-[loading_3s_ease-out_forwards]"></div>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-2 tracking-widest">INICIALIZANDO ENTORNO SEGURO...</p>
+                </div>
+                <style jsx>{`
+                    @keyframes loading {
+                        from { width: 0%; }
+                        to { width: 100%; }
+                    }
+                `}</style>
+            </div>
+        )
+    }
+
+    // --- VISTA NORMAL DE LOGIN FACIAL ---
     return (
         <div className="h-screen flex flex-col bg-[#0B1120] text-slate-300 font-sans selection:bg-[#10B981] selection:text-white overflow-hidden">
-            <style jsx global>{`
-                .glass-panel { background-color: rgba(15, 22, 35, 0.8); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.05); }
-                .corner-border { position: absolute; width: 40px; height: 40px; border-color: rgba(16, 185, 129, 0.5); border-style: solid; pointer-events: none; z-index: 30; }
-                .corner-tl { top: 20px; left: 20px; border-width: 3px 0 0 3px; border-top-left-radius: 4px; }
-                .corner-tr { top: 20px; right: 20px; border-width: 3px 3px 0 0; border-top-right-radius: 4px; }
-                .corner-bl { bottom: 20px; left: 20px; border-width: 0 0 3px 3px; border-bottom-left-radius: 4px; }
-                .corner-br { bottom: 20px; right: 20px; border-width: 0 3px 3px 0; border-bottom-right-radius: 4px; }
-                @keyframes scan { 0% { top: 0%; opacity: 0; } 50% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
-                .animate-scan-line { animation: scan 3s linear infinite; }
-            `}</style>
-
             <header className="flex-none w-full px-6 py-3 border-b border-white/5 flex items-center justify-between relative z-20 bg-[#0B111D]/80 backdrop-blur-xl">
-                <div className="flex items-center space-x-3 cursor-pointer" onClick={() => router.push('/')}>
+                 <div className="flex items-center space-x-3 cursor-pointer" onClick={() => router.push('/')}>
                     <div className="w-10 h-10 flex items-center justify-center">
                         <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
                     </div>
@@ -156,20 +165,13 @@ export default function LoginCaraPage() {
                         Validex <span className="text-[#10B981]">UP</span>
                     </div>
                 </div>
-
-                {/* AQUÍ ESTABA EL STEPPER. AHORA SOLO ES UN BADGE INFORMATIVO */}
-                <div className="hidden md:flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-[11px] font-semibold tracking-wider uppercase text-slate-400">
-                    <span className="material-icons-round text-[#10B981] text-sm">lock</span>
-                    Verificación Segura
-                </div>
-
                 <button onClick={() => router.push('/login')} className="px-5 py-2 rounded-lg border border-slate-700 uppercase text-[10px] font-black">
                     Cancelar
                 </button>
             </header>
 
             <main className="flex-1 flex flex-col items-center justify-center p-4 min-h-0">
-                <div className="w-full max-w-4xl h-full max-h-full glass-panel rounded-2xl p-4 md:p-6 flex flex-col items-center text-center space-y-4 shadow-2xl">
+                <div className="w-full max-w-4xl h-full max-h-full rounded-2xl p-4 md:p-6 flex flex-col items-center text-center space-y-4 shadow-2xl relative bg-slate-900/50 border border-white/5">
                     <div className="flex-none space-y-2">
                         <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">
                             Verificación de <span className="text-[#10B981]">Identidad</span>
@@ -181,30 +183,11 @@ export default function LoginCaraPage() {
                         <div className="relative h-full aspect-[4/3] max-w-full bg-black rounded-2xl overflow-hidden shadow-2xl border border-slate-700/50">
                             <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover scale-x-[-1]" />
                             <canvas ref={canvasRef} className="hidden" />
-
-                            <div className="absolute inset-0 bg-radial-gradient(circle, transparent 30%, rgba(15, 23, 42, 0.4) 100%) pointer-events-none"></div>
-
-                            {/* UI de Escaneo */}
-                            <div className="absolute top-6 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1 bg-black/60 backdrop-blur-md rounded-full border border-white/10 z-30">
-                                <span className="w-2 h-2 rounded-full bg-[#10B981] shadow-[0_0_8px_#10B981] animate-pulse"></span>
-                                <span className="text-[10px] font-bold tracking-widest text-white/90 uppercase">En vivo</span>
+                            
+                            <div className="absolute top-4 right-4 flex items-center gap-2 bg-black/50 backdrop-blur px-3 py-1 rounded-full border border-white/10">
+                                <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-white">REC</span>
                             </div>
-
-                            <div className="absolute bottom-8 left-0 w-full text-center z-30 pointer-events-none">
-                                <span className={`px-4 py-2 backdrop-blur-md rounded-full text-xs font-medium border transition-all duration-300 ${
-                                    feedbackStatus === 'warning' ? 'bg-amber-500/20 border-amber-500/50 text-amber-200' :
-                                    feedbackStatus === 'success' ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-200' :
-                                    'bg-black/60 border-white/10 text-white/90'
-                                }`}>
-                                    {feedback}
-                                </span>
-                            </div>
-
-                            <div className="corner-border corner-tl"></div>
-                            <div className="corner-border corner-tr"></div>
-                            <div className="corner-border corner-bl"></div>
-                            <div className="corner-border corner-br"></div>
-                            <div className="absolute left-0 w-full h-0.5 bg-[#10B981]/50 shadow-[0_0_10px_#10B981] animate-scan-line pointer-events-none z-20"></div>
                         </div>
                     </div>
 
@@ -218,7 +201,7 @@ export default function LoginCaraPage() {
                                 {isLoading ? 'sync' : 'fingerprint'}
                             </span>
                             <span>
-                                {isLoading ? 'Verificando...' : 'Ingresar al Sistema'}
+                                {isLoading ? 'Verificando...' : 'Autenticar Acceso'}
                             </span>
                         </button>
                     </div>

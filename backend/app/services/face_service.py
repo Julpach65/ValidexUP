@@ -39,11 +39,19 @@ def get_face_embedding(base64_image):
             img_path=img, 
             model_name="VGG-Face", 
             enforce_detection=True, 
-            detector_backend='opencv'
+            detector_backend='retinaface'
         )
         
+        # --- VALIDACIÓN DE SEGURIDAD: MÚLTIPLES ROSTROS ---
+        if len(results) > 1:
+            raise ValueError("MULTIPLE_FACES_DETECTED")
+
         # Retornamos solo la lista de números del primer rostro detectado
         return results[0]["embedding"]
+    except ValueError as ve:
+        if "MULTIPLE_FACES_DETECTED" in str(ve):
+            raise ve # Propagamos el error de seguridad para manejarlo en el endpoint
+        return None
     except Exception as e:
         print(f"Error en el reconocimiento facial: {e}")
         return None

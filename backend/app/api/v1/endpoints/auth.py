@@ -174,7 +174,15 @@ from sqlmodel import select # Asegúrate de tener esta importación arriba
 
 @router.post("/register-face")
 def register_face(data: FaceRegisterRequest, session: Session = Depends(get_session)):
-    embedding = get_face_embedding(data.image_data)
+    try:
+        embedding = get_face_embedding(data.image_data)
+    except ValueError as e:
+        if "MULTIPLE_FACES_DETECTED" in str(e):
+            raise HTTPException(
+                status_code=400, 
+                detail="Se detectaron múltiples rostros. Para el registro debes estar solo."
+            )
+        embedding = None
     
     if not embedding:
         raise HTTPException(
@@ -218,7 +226,15 @@ from fastapi import status
 @router.post("/verify-face-login")
 def verify_face_login(data: FaceRegisterRequest, session: Session = Depends(get_session)):
     # 1. Intentar extraer el rostro de la imagen enviada
-    current_embedding = get_face_embedding(data.image_data)
+    try:
+        current_embedding = get_face_embedding(data.image_data)
+    except ValueError as e:
+        if "MULTIPLE_FACES_DETECTED" in str(e):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, 
+                detail="🚫 SEGURIDAD: Se detectaron múltiples personas. Solo una persona permitida frente a la cámara."
+            )
+        current_embedding = None
     
     if not current_embedding:
         raise HTTPException(
@@ -265,5 +281,6 @@ def verify_face_login(data: FaceRegisterRequest, session: Session = Depends(get_
 
     return {
         "status": "success", 
-        "message": f"Identidad verificada correctamente. ¡Bienvenido, {user.nombre_completo}!"
+        "message": f"Identidad verificada correctamente. ¡Bienvenido, {user.nombre_completo}!",
+        "user_name": user.nombre_completo
     }
