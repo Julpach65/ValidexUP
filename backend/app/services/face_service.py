@@ -3,6 +3,7 @@ import cv2
 import base64
 from deepface import DeepFace
 import os
+import json
 
 def base64_to_image(base64_string):
     """
@@ -46,3 +47,43 @@ def get_face_embedding(base64_image):
     except Exception as e:
         print(f"Error en el reconocimiento facial: {e}")
         return None
+
+def verify_face_match(stored_embedding_str: str, current_embedding: list, threshold: float = 0.40) -> bool:
+    """
+    Compara el embedding guardado en BD (TEXT/JSON) con el nuevo capturado (List).
+    Usa Distancia Coseno.
+    
+    Args:
+        stored_embedding_str: String JSON de la base de datos (ej. "[0.1, 0.2...]")
+        current_embedding: Lista de floats generada por DeepFace en este momento.
+        threshold: Límite de tolerancia (0.40 recomendado para VGG-Face/Cosine).
+        
+    Returns:
+        True si la distancia es MENOR al umbral (Es la misma persona).
+    """
+    print(f"⚡ Iniciando cálculo matemático de similitud...", flush=True)
+    try:
+        if not stored_embedding_str:
+            print("⚠️ Error: El embedding guardado en BD está vacío.", flush=True)
+            return False
+            
+        # 1. Convertir el string de la BD a lista y luego ambos a NumPy Arrays
+        known_embedding = np.array(json.loads(stored_embedding_str))
+        candidate_embedding = np.array(current_embedding)
+        
+        # 2. Calcular Distancia Coseno
+        # Fórmula: 1 - (Producto Punto / (Magnitud A * Magnitud B))
+        dot_product = np.dot(known_embedding, candidate_embedding)
+        norm_a = np.linalg.norm(known_embedding)
+        norm_b = np.linalg.norm(candidate_embedding)
+        
+        cosine_distance = 1 - (dot_product / (norm_a * norm_b))
+        
+        print(f"🔍 Distancia Biométrica: {cosine_distance:.4f} (Umbral: {threshold})", flush=True)
+        
+        # 3. Si la distancia es menor al umbral, es un MATCH
+        return cosine_distance < threshold
+        
+    except Exception as e:
+        print(f"Error en comparación matemática: {e}", flush=True)
+        return False
