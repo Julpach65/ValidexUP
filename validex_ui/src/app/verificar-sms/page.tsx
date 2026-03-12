@@ -99,22 +99,29 @@ export default function RegisterSMSPage() {
 
             const data = await response.json();
 
-            // 🛠️ CAMBIO AQUÍ: Usamos data.status porque así responde tu Python
             if (response.ok && data.status === "SMS_VERIFIED") {
-                // 🛠️ FIX: Autorizamos el paso a la cámara antes de redirigir
-                localStorage.setItem('registration_step', 'face');
-                router.push(`/verificar-sms/correcta?phone=${phone}&code=${fullCode}`);
+                // Determinamos el destino basado en si ya tiene cara registrada
+                const destination = data.has_face_registered ? '/login-cara' : '/registro-cara';
+                
+                if (!data.has_face_registered) {
+                    localStorage.setItem('registration_step', 'face');
+                }
+                
+                // CORRECCIÓN: Redirección directa al destino.
+                // Evitamos la página intermedia que estaba causando el desvío incorrecto a 'crear-cuenta'.
+                router.push(destination);
             } else {
-                router.push(`/verificar-sms/fallida?phone=${phone}`);
+                // Redirección a tu pantalla de fallo
+                router.push('/verificar-sms/fallida');
             }
         } catch (error) {
             console.error("Error de verificación:", error);
-            router.push(`/verificar-sms/fallida?phone=${phone}`);
+            alert('Error de conexión al verificar el código.');
         } finally {
             setIsLoading(false);
         }
     };
-
+    
     const handleOtpChange = (index: number, value: string) => {
         if (value.length > 1) value = value.slice(-1);
         if (!/^\d*$/.test(value)) return;

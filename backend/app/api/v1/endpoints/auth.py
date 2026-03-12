@@ -157,20 +157,42 @@ def verify_sms(body: VerifySMSRequest, session: Session = Depends(get_session)) 
     sesion_activa.paso_2_sms = True
     session.add(sesion_activa)
     session.commit()
+
+    # VERIFICACIÓN ROBUSTA: Consultamos si el usuario ya tiene biometría
+    user = session.get(Usuario, body.id_usuario)
+    has_face = False
+    if user and user.face:
+        has_face = True
         
-    return {"msg": "Paso 2 completado", "status": "SMS_VERIFIED"}
+    return {
+        "msg": "Paso 2 completado", 
+        "status": "SMS_VERIFIED",
+        "has_face_registered": has_face # <--- Nueva bandera de verdad absoluta
+    }
 
 from sqlmodel import select # Asegúrate de tener esta importación arriba
 
 @router.post("/register-face")
 def register_face(data: FaceRegisterRequest, session: Session = Depends(get_session)):
-    embedding = get_face_embedding(data.image_data)
-    
-    if not embedding:
-        raise HTTPException(
-            status_code=400, 
-            detail="No se pudo detectar un rostro. Intenta con mejor iluminación."
-        )
+    try:
+        embedding = get_face_embedding(data.image_data)
+    except ValueError as e:
+        error_str = str(e)
+        if "MULTIPLE_FACES_DETECTED" in error_str:
+            raise HTTPException(
+                status_code=400, 
+                detail="Se detectaron múltiples rostros. Para el registro debes estar solo."
+            )
+        elif "FACE_TOO_SMALL_OR_PARTIAL" in error_str:
+            raise HTTPException(
+                status_code=400,
+                detail="Rostro parcial o muy lejano. Acércate y mira de frente a la cámara para el registro."
+            )
+        else: # Cubre NO_FACE_DETECTED, etc.
+            raise HTTPException(
+                status_code=400, 
+                detail="No se pudo detectar un rostro. Intenta con mejor iluminación."
+            )
     
     user = session.get(Usuario, data.user_id)
     if not user:
@@ -199,4 +221,75 @@ def register_face(data: FaceRegisterRequest, session: Session = Depends(get_sess
     return {
         "status": "success",
         "message": f"Rostro de {user.nombre_completo} registrado y seguridad completada."
+    }
+
+    # Seccion de verificar Rostro 
+from app.services.face_service import get_face_embedding, verify_face_match
+from fastapi import status
+
+@router.post("/verify-face-login")
+def verify_face_login(data: FaceRegisterRequest, session: Session = Depends(get_session)):
+    # 1. Intentar extraer el rostro de la imagen enviada
+    try:
+        current_embedding = get_face_embedding(data.image_data)
+    except ValueError as e:
+        error_str = str(e)
+        if "MULTIPLE_FACES_DETECTED" in error_str:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, 
+                detail="🚫 SEGURIDAD: Se detectaron múltiples personas. Solo una persona permitida."
+            )
+        elif "FACE_TOO_SMALL_OR_PARTIAL" in error_str:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, 
+                detail="🚫 CALIDAD: Rostro parcial o muy lejano. Acércate y mira de frente a la cámara."
+            )
+        else: # Cubre NO_FACE_DETECTED y otros errores internos.
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, 
+                detail="No se pudo procesar el rostro. Asegúrate de tener buena iluminación."
+            )
+
+    # 2. Buscar al usuario y verificar si tiene biometría registrada
+    user = session.get(Usuario, data.user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Usuario no encontrado."
+        )
+    
+    if not user.face:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, 
+            detail="El usuario no tiene un rostro registrado en el sistema."
+        )
+
+    # 3. COMPARACIÓN BIOMÉTRICA (El corazón del login)
+    # verify_face_match se encarga de calcular la distancia coseno
+    # Aumentamos el threshold a 0.65 para ser más tolerantes con la iluminación y ángulos
+    es_valido = verify_face_match(user.face, current_embedding, threshold=0.65)
+
+    if not es_valido:
+        # Aquí es donde lanzamos el error que pediste
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, 
+            detail="El rostro no coincide con el usuario. Acceso denegado."
+        )
+
+    # 4. ACTUALIZACIÓN DE SEGURIDAD (Paso 3 completado)
+    statement = select(Sesion).where(
+        Sesion.id_usuario == data.user_id
+    ).order_by(Sesion.id_sesion.desc())
+    
+    db_session = session.exec(statement).first()
+
+    if db_session:
+        db_session.paso_3_face = 1  # Marcamos éxito en la base de datos
+        session.add(db_session)
+        session.commit()
+
+    return {
+        "status": "success", 
+        "message": f"Identidad verificada correctamente. ¡Bienvenido, {user.nombre_completo}!",
+        "user_name": user.nombre_completo
     }

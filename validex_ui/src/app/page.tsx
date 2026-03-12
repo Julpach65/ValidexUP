@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 export default function LoginPage() {
   const router = useRouter()
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('secretpassword')
+  const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
 
   // --- LÓGICA DE COOKIE/POLÍTICA AGREGADA ---
@@ -22,9 +22,46 @@ export default function LoginPage() {
   }
   // ------------------------------------------
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    router.push('/verificar-sms')
+const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // El backend usa OAuth2PasswordRequestForm, por lo que espera 
+    // los datos como 'username' y 'password' en formato de formulario.
+    const details: any = {
+      'username': email,
+      'password': password,
+    };
+
+    const formBody = Object.keys(details)
+      .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(details[key]))
+      .join('&');
+
+    try {
+      const response = await fetch('http://localhost:8000/api/v1/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+        },
+        body: formBody,
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Guardamos el token y el id_usuario (que regresas en tu return del backend)
+        localStorage.setItem('token', data.access_token);
+        localStorage.setItem('id_usuario_actual', data.id_usuario);
+        localStorage.setItem('registration_step', 'sms'); // 🛠️ FIX: Sincronizamos el paso para el guardián de rutas
+        
+        console.log("Login exitoso, redirigiendo a SMS...");
+        router.push('/verificar-sms');
+      } else {
+        alert(data.detail || "Credenciales incorrectas");
+      }
+    } catch (error) {
+      console.error("Error conectando al servidor:", error);
+      alert("No se pudo conectar con el servidor de Validex UP.");
+    }
   }
 
   return (
