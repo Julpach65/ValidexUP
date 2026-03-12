@@ -107,7 +107,7 @@ export default function LoginCaraPage() {
         return (
             <div className="h-screen w-full bg-black flex flex-col items-center justify-center relative overflow-hidden font-mono">
                 {/* Audio para el efecto de sonido */}
-                <audio src="/sounds/access_granted.mp3" autoPlay preload="auto"></audio>
+                <audio src="/sounds/AudioBienvenida.mp3" autoPlay preload="auto"></audio>
 
                 {/* Fondo animado de rejilla */}
                 <div className="absolute inset-0 opacity-20 bg-[linear-gradient(to_right,#10B981_1px,transparent_1px),linear-gradient(to_bottom,#10B981_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)]"></div>
@@ -156,7 +156,7 @@ export default function LoginCaraPage() {
     // --- VISTA NORMAL DE LOGIN FACIAL ---
     return (
         <div className="h-screen flex flex-col bg-[#0B1120] text-slate-300 font-sans selection:bg-[#10B981] selection:text-white overflow-hidden">
-            <header className="flex-none w-full px-6 py-3 border-b border-white/5 flex items-center justify-between relative z-20 bg-[#0B111D]/80 backdrop-blur-xl">
+            <header className="flex-none w-full px-6 py-3 border-b border-white/5 flex flex-col md:flex-row items-center justify-between relative z-20 bg-[#0B111D]/80 backdrop-blur-xl gap-4 md:gap-0">
                  <div className="flex items-center space-x-3 cursor-pointer" onClick={() => router.push('/')}>
                     <div className="w-10 h-10 flex items-center justify-center">
                         <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
@@ -165,6 +165,39 @@ export default function LoginCaraPage() {
                         Validex <span className="text-[#10B981]">UP</span>
                     </div>
                 </div>
+
+                {/* STEPPER DE PROGRESO (VISUAL - LOGIN) */}
+                <div className="w-full max-w-sm relative hidden md:block">
+                    <div className="flex items-center justify-between relative">
+                        {/* Línea de fondo */}
+                        <div className="absolute top-1/2 left-0 w-full h-0.5 bg-[#10B981]/20 -z-10 transform -translate-y-1/2"></div>
+                        
+                        {/* Paso 1: Credenciales (Completado) */}
+                        <div className="flex flex-col items-center gap-1">
+                            <div className="w-8 h-8 rounded-full bg-[#0B111D] border border-[#10B981] flex items-center justify-center text-[#10B981]">
+                                <span className="material-icons-round text-sm">lock</span>
+                            </div>
+                            <span className="text-[9px] font-bold tracking-widest text-[#10B981] uppercase opacity-60">Cuenta</span>
+                        </div>
+
+                        {/* Paso 2: SMS (Completado) */}
+                        <div className="flex flex-col items-center gap-1">
+                            <div className="w-8 h-8 rounded-full bg-[#0B111D] border border-[#10B981] flex items-center justify-center text-[#10B981]">
+                                <span className="material-icons-round text-sm">smartphone</span>
+                            </div>
+                            <span className="text-[9px] font-bold tracking-widest text-[#10B981] uppercase opacity-60">SMS</span>
+                        </div>
+
+                        {/* Paso 3: Biometría (Activo) */}
+                        <div className="flex flex-col items-center gap-1">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#10B981] to-emerald-600 text-white flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.5)] border-2 border-[#10B981]/20 relative z-10">
+                                <span className="material-icons-round text-lg">face</span>
+                            </div>
+                            <span className="text-[9px] font-bold tracking-widest text-white uppercase mt-1">Rostro</span>
+                        </div>
+                    </div>
+                </div>
+
                 <button onClick={() => router.push('/login')} className="px-5 py-2 rounded-lg border border-slate-700 uppercase text-[10px] font-black">
                     Cancelar
                 </button>

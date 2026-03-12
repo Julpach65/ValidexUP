@@ -177,18 +177,22 @@ def register_face(data: FaceRegisterRequest, session: Session = Depends(get_sess
     try:
         embedding = get_face_embedding(data.image_data)
     except ValueError as e:
-        if "MULTIPLE_FACES_DETECTED" in str(e):
+        error_str = str(e)
+        if "MULTIPLE_FACES_DETECTED" in error_str:
             raise HTTPException(
                 status_code=400, 
                 detail="Se detectaron múltiples rostros. Para el registro debes estar solo."
             )
-        embedding = None
-    
-    if not embedding:
-        raise HTTPException(
-            status_code=400, 
-            detail="No se pudo detectar un rostro. Intenta con mejor iluminación."
-        )
+        elif "FACE_TOO_SMALL_OR_PARTIAL" in error_str:
+            raise HTTPException(
+                status_code=400,
+                detail="Rostro parcial o muy lejano. Acércate y mira de frente a la cámara para el registro."
+            )
+        else: # Cubre NO_FACE_DETECTED, etc.
+            raise HTTPException(
+                status_code=400, 
+                detail="No se pudo detectar un rostro. Intenta con mejor iluminación."
+            )
     
     user = session.get(Usuario, data.user_id)
     if not user:
@@ -229,18 +233,22 @@ def verify_face_login(data: FaceRegisterRequest, session: Session = Depends(get_
     try:
         current_embedding = get_face_embedding(data.image_data)
     except ValueError as e:
-        if "MULTIPLE_FACES_DETECTED" in str(e):
+        error_str = str(e)
+        if "MULTIPLE_FACES_DETECTED" in error_str:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, 
-                detail="🚫 SEGURIDAD: Se detectaron múltiples personas. Solo una persona permitida frente a la cámara."
+                detail="🚫 SEGURIDAD: Se detectaron múltiples personas. Solo una persona permitida."
             )
-        current_embedding = None
-    
-    if not current_embedding:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, 
-            detail="No se detectó ningún rostro. Asegúrate de tener buena iluminación."
-        )
+        elif "FACE_TOO_SMALL_OR_PARTIAL" in error_str:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, 
+                detail="🚫 CALIDAD: Rostro parcial o muy lejano. Acércate y mira de frente a la cámara."
+            )
+        else: # Cubre NO_FACE_DETECTED y otros errores internos.
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, 
+                detail="No se pudo procesar el rostro. Asegúrate de tener buena iluminación."
+            )
 
     # 2. Buscar al usuario y verificar si tiene biometría registrada
     user = session.get(Usuario, data.user_id)
@@ -258,7 +266,8 @@ def verify_face_login(data: FaceRegisterRequest, session: Session = Depends(get_
 
     # 3. COMPARACIÓN BIOMÉTRICA (El corazón del login)
     # verify_face_match se encarga de calcular la distancia coseno
-    es_valido = verify_face_match(user.face, current_embedding)
+    # Aumentamos el threshold a 0.65 para ser más tolerantes con la iluminación y ángulos
+    es_valido = verify_face_match(user.face, current_embedding, threshold=0.65)
 
     if not es_valido:
         # Aquí es donde lanzamos el error que pediste
