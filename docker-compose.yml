@@ -1,0 +1,98 @@
+# ===================================================================
+# Docker Compose: Validex UP - Orquestador Zero-Trust
+# ===================================================================
+# Para iniciar el sistema completo:   docker-compose up --build
+# Para detenerlo:                     docker-compose down
+# Para detener y borrar datos:        docker-compose down -v
+# ===================================================================
+
+services:
+
+  # 1. BASE DE DATOS MySQL (Red Privada, Sin Puerto Expuesto al Sistema)
+  mysql:
+    image: mysql:8.0
+    container_name: validex_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-ValidexSecure2026}
+      MYSQL_DATABASE: ValidexDB
+      MYSQL_USER: ${DB_USER:-validexuser}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-ValidexSecure2026}
+    volumes:
+      # Volumen persistente: los datos sobreviven al reinicio de contenedores
+      - validex_mysql_data:/var/lib/mysql
+      # Script de inicializacion: crea las tablas al primer arranque
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+    networks:
+      - validex_internal  # Solo visible en la red interna (Zero-Trust)
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-ValidexSecure2026}"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # 2. BACKEND FastAPI (Puede ver MySQL, expone puerto al frontend)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: validex_backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env  # Usa el .env local ya configurado
+    environment:
+      # Sobrescribe la URL de la DB para que apunte al contenedor MySQL
+      DATABASE_URL: mysql+pymysql://${DB_USER:-validexuser}:${DB_PASSWORD:-ValidexSecure2026}@mysql:3306/ValidexDB
+    ports:
+      - "8000:8000"  # Expuesto para debugging y acceso directo a /docs
+    networks:
+      - validex_internal   # Accede a MySQL por red interna
+      - validex_frontend   # El frontend puede llamarlo
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/')"]
+      interval: 30s
+      timeout: 15s
+      retries: 3
+      start_period: 30s
+
+  # 3. FRONTEND Next.js (Solo ve el Backend, expone puerto al usuario)
+  frontend:
+    build:
+      context: ./validex_ui
+      dockerfile: Dockerfile
+      target: production
+    container_name: validex_frontend
+    restart: unless-stopped
+    environment:
+      # En Docker, el proxy apunta al nombre del servicio 'backend'
+      NEXT_PUBLIC_API_URL: http://backend:8000
+    ports:
+      - "3000:3000"  # Puerto accesible desde el navegador del usuario
+    networks:
+      - validex_frontend   # Solo puede ver el backend (no la DB)
+    depends_on:
+      backend:
+        condition: service_healthy
+
+# ===================================================================
+# Definicion de Redes (Arquitectura Zero-Trust)
+# ===================================================================
+networks:
+  validex_internal:
+    driver: bridge
+    internal: true  # Esta red NO tiene acceso a internet - solo service-to-service
+    name: validex_internal_net
+  validex_frontend:
+    driver: bridge
+    name: validex_frontend_net
+
+# ===================================================================
+# Volumenes Persistentes (Los datos sobreviven al reinicio)
+# ===================================================================
+volumes:
+  validex_mysql_data:
+    name: validex_mysql_data

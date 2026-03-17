@@ -1,19 +1,24 @@
 'use client'
 import { useRouter, usePathname } from 'next/navigation'
 
+import { useAuth } from '@/hooks/useAuth'
+
 interface AppHeaderProps {
-    user?: {
-        name: string;
-        role: string;
-    };
     title?: React.ReactNode;
 }
 
-export default function AppHeader({ user, title }: AppHeaderProps) {
+export default function AppHeader({ title }: AppHeaderProps) {
     const router = useRouter()
     const pathname = usePathname()
+    const { user, isLoading } = useAuth()
 
-    const currentUser = user || { name: 'EL NOYER', role: 'Administrador' }
+    const isBrowser = typeof window !== 'undefined'
+    const hasToken = isBrowser ? localStorage.getItem('access_token') : null
+
+    const currentUser = user || { 
+        nombre_completo: isLoading ? '...' : (hasToken ? 'Sesión Expirada' : 'Invitado'), 
+        rol: isLoading ? '...' : (hasToken ? 'Reconectar' : 'Sin Acceso') 
+    }
     const currentTitle = title || (
         <>Validex <span className="text-[#10b981]">UP</span></>
     )
@@ -22,7 +27,12 @@ export default function AppHeader({ user, title }: AppHeaderProps) {
         { label: 'Dashboard', icon: 'dashboard', href: '/dashboard' },
         { label: 'Operaciones', icon: 'local_shipping', href: '/pipas' },
         { label: 'Bitácora', icon: 'history', href: '/bitacora' },
-    ]
+    ].filter(item => {
+        if (currentUser.rol === 'VISOR') {
+            return item.label === 'Bitácora';
+        }
+        return true;
+    })
 
     return (
         <header className="w-full h-20 bg-[#0F172A] border-b border-white/5 relative z-30 shadow-2xl">
@@ -71,8 +81,8 @@ export default function AppHeader({ user, title }: AppHeaderProps) {
 
                     <div className="flex items-center gap-3 pl-4 border-l border-white/5">
                         <div className="hidden text-right lg:block">
-                            <p className="text-xs font-black text-white uppercase tracking-wider">{currentUser.name}</p>
-                            <p className="text-[10px] text-[#10b981] font-bold">{currentUser.role}</p>
+                            <p className="text-xs font-black text-white uppercase tracking-wider">{currentUser.nombre_completo}</p>
+                            <p className="text-[10px] text-[#10b981] font-bold">{currentUser.rol}</p>
                         </div>
                         <button
                             onClick={() => router.push('/')}

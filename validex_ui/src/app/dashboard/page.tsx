@@ -1,13 +1,48 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Truck, FileText, Bell, Shield, LogOut } from 'lucide-react';
-import { APP_INFO, USER_MOCK } from '@/data/mockData';
+import { motion, Variants } from 'framer-motion';
+import { APP_INFO } from '@/data/mockData';
+import { useAuth } from '@/hooks/useAuth';
 import AppHeader from '@/components/layout/AppHeader';
+
+const containerVariants: Variants = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.15
+        }
+    }
+};
+
+const itemVariants: Variants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: {
+            duration: 0.6,
+            ease: "easeOut"
+        }
+    }
+};
 
 export default function DashboardPage() {
     const router = useRouter();
+    const { user, isLoading } = useAuth();
+
+    useEffect(() => {
+        if (!isLoading && user?.rol === 'VISOR') {
+            router.push('/bitacora');
+        }
+    }, [user, isLoading, router]);
+
+    if (isLoading || user?.rol === 'VISOR') {
+        return <div className="min-h-screen bg-[#0B1120]" />;
+    }
 
     return (
         <div className="min-h-screen bg-[#0B1120] flex flex-col relative overflow-hidden">
@@ -17,54 +52,83 @@ export default function DashboardPage() {
             <AppHeader />
 
             {/* Main Content Hub */}
-            <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-16 w-full relative z-10">
+            <motion.main 
+                initial="hidden"
+                animate="visible"
+                variants={containerVariants}
+                className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-16 w-full relative z-10"
+            >
                 <div className="mb-12">
-                    <h1 className="text-4xl font-black text-white tracking-tight leading-none uppercase">
+                    <motion.h1 
+                        variants={itemVariants}
+                        className="text-4xl font-black text-white tracking-tight leading-none uppercase"
+                    >
                         Gestión de módulos <br />
                         Validex <span className="text-[#10b981]">UP</span>
-                    </h1>
+                    </motion.h1>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                <motion.div 
+                    variants={itemVariants}
+                    className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto"
+                >
 
                     {/* Card 1: Descargas */}
-                    <button
+                    <motion.button
+                        whileHover={{ scale: 1.02, y: -5, rotateX: 2, rotateY: -2 }}
+                        whileTap={{ scale: 0.98 }}
                         onClick={() => router.push('/pipas')}
-                        className="group relative flex flex-col items-center justify-center p-12 bg-slate-800/50 backdrop-blur-md rounded-2xl border border-slate-700 hover:border-emerald-500/50 transition-all duration-300 hover:shadow-[0_0_30px_rgba(16,185,129,0.15)] hover:-translate-y-1 text-left overflow-hidden w-full h-full min-h-[300px]"
+                        className="group relative flex flex-col items-center justify-center p-12 bg-slate-800/50 backdrop-blur-md rounded-2xl border border-slate-700 hover:border-emerald-500/50 transition-all duration-300 hover:shadow-[0_0_40px_rgba(16,185,129,0.2)] text-left overflow-hidden w-full h-full min-h-[300px]"
+                        style={{ perspective: 1000 }}
                     >
-                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        
+                        {/* Interactive Border Glow */}
+                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
+                            <div className="absolute inset-[-1px] rounded-2xl bg-gradient-to-r from-emerald-500/20 via-transparent to-emerald-500/20 blur-sm"></div>
+                        </div>
+
                         <div className="w-24 h-24 rounded-full bg-slate-800/80 border border-slate-600 flex items-center justify-center mb-6 text-slate-300 group-hover:text-emerald-500 group-hover:scale-110 group-hover:bg-slate-800 transition-all duration-300 z-10 shadow-lg">
                             <Truck className="w-12 h-12" />
                         </div>
-                        <h2 className="text-2xl font-bold text-white mb-3 z-10">Gestión de Pipas y Descargas</h2>
+                        <h2 className="text-2xl font-bold text-white mb-3 z-10 text-center">Gestión de Pipas y Descargas</h2>
                         <p className="text-slate-400 text-center text-sm max-w-xs z-10 leading-relaxed group-hover:text-slate-300 transition-colors">
                             Autorización biométrica para descarga de tanques, monitoreo de volumen y asignación.
                         </p>
                         <div className="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transform translate-x-4 group-hover:translate-x-0 transition-all duration-300 text-emerald-500 z-10">
                             <span className="material-icons-round">arrow_forward</span>
                         </div>
-                    </button>
+                    </motion.button>
 
                     {/* Card 2: Bitacora */}
-                    <button
+                    <motion.button
+                        whileHover={{ scale: 1.02, y: -5, rotateX: 2, rotateY: 2 }}
+                        whileTap={{ scale: 0.98 }}
                         onClick={() => router.push('/bitacora')}
-                        className="group relative flex flex-col items-center justify-center p-12 bg-slate-800/50 backdrop-blur-md rounded-2xl border border-slate-700 hover:border-blue-500/50 transition-all duration-300 hover:shadow-[0_0_30px_rgba(59,130,246,0.15)] hover:-translate-y-1 text-left overflow-hidden w-full h-full min-h-[300px]"
+                        className="group relative flex flex-col items-center justify-center p-12 bg-slate-800/50 backdrop-blur-md rounded-2xl border border-slate-700 hover:border-blue-500/50 transition-all duration-300 hover:shadow-[0_0_40px_rgba(59,130,246,0.2)] text-left overflow-hidden w-full h-full min-h-[300px]"
+                        style={{ perspective: 1000 }}
                     >
-                        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        
+                        {/* Interactive Border Glow */}
+                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
+                            <div className="absolute inset-[-1px] rounded-2xl bg-gradient-to-r from-blue-500/20 via-transparent to-blue-500/20 blur-sm"></div>
+                        </div>
+
                         <div className="w-24 h-24 rounded-full bg-slate-800/80 border border-slate-600 flex items-center justify-center mb-6 text-slate-300 group-hover:text-blue-400 group-hover:scale-110 group-hover:bg-slate-800 transition-all duration-300 z-10 shadow-lg">
                             <FileText className="w-12 h-12" />
                         </div>
-                        <h2 className="text-2xl font-bold text-white mb-3 z-10">Bitácora y Auditoría</h2>
+                        <h2 className="text-2xl font-bold text-white mb-3 z-10 text-center">Bitácora y Auditoría</h2>
                         <p className="text-slate-400 text-center text-sm max-w-xs z-10 leading-relaxed group-hover:text-slate-300 transition-colors">
                             Registro inmutable de accesos, intentos denegados y autorizaciones despachadas.
                         </p>
                         <div className="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transform translate-x-4 group-hover:translate-x-0 transition-all duration-300 text-blue-400 z-10">
                             <span className="material-icons-round">arrow_forward</span>
                         </div>
-                    </button>
+                    </motion.button>
 
-                </div>
-            </main>
+                </motion.div>
+            </motion.main>
 
             <footer className="mt-auto border-t border-gray-800 bg-[#0d121d] py-6 relative z-10">
                 <div className="max-w-7xl mx-auto px-4 text-center">

@@ -1,5 +1,6 @@
 'use client';
 
+import { API_BASE_URL } from '@/config/api';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Smartphone, ArrowRight, ShieldCheck, Clock } from 'lucide-react';
@@ -17,7 +18,7 @@ export default function RegisterSMSPage() {
     //  MODIFICADO: Estado para recuperar el ID del usuario registrado en la pantalla anterior
     const [userId, setUserId] = useState<string | null>(null);
 
-    // 🛠️ MODIFICADO: Efecto para recuperar el ID del localStorage al cargar la página
+    // ️ MODIFICADO: Efecto para recuperar el ID del localStorage al cargar la página
     useEffect(() => {
         const savedId = localStorage.getItem('id_usuario_actual');
         if (!savedId) {
@@ -50,14 +51,14 @@ export default function RegisterSMSPage() {
         setPhone(value);
     };
 
-    // 🛠️ MODIFICADO: Ahora envía el teléfono al backend para actualizar el usuario y generar el OTP
+    // ️ MODIFICADO: Ahora envía el teléfono al backend para actualizar el usuario y generar el OTP
     const handleSendSMS = async () => {
         if (phone.length !== 10 || !userId) return;
         setIsLoading(true);
 
         try {
             // Cambia esta URL por tu endpoint real de FastAPI
-            const response = await fetch('http://localhost:8000/api/v1/auth/request-otp', {
+            const response = await fetch(`${API_BASE_URL}/auth/request-otp`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -81,14 +82,14 @@ export default function RegisterSMSPage() {
         }
     };
 
-    // 🛠️ MODIFICADO: Ahora valida el código contra la base de datos real
+    // ️ MODIFICADO: Ahora valida el código contra la base de datos real
    const handleVerifyOTP = async () => {
         const fullCode = otp.join('');
         if (fullCode.length < 6 || !userId) return;
         setIsLoading(true);
 
         try {
-            const response = await fetch('http://localhost:8000/api/v1/auth/verify-otp', {
+            const response = await fetch(`${API_BASE_URL}/auth/verify-otp`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -136,6 +137,16 @@ export default function RegisterSMSPage() {
         }
     };
 
+    const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'ArrowRight' && index < 5) {
+            document.getElementById(`otp-${index + 1}`)?.focus();
+        } else if (e.key === 'ArrowLeft' && index > 0) {
+            document.getElementById(`otp-${index - 1}`)?.focus();
+        } else if (e.key === 'Backspace' && !otp[index] && index > 0) {
+            document.getElementById(`otp-${index - 1}`)?.focus();
+        }
+    };
+
     return (
         <div className="min-h-screen flex bg-[#0B1120] relative overflow-hidden selection:bg-[#10B981] selection:text-white">
             {/* Background Glows */}
@@ -155,21 +166,21 @@ export default function RegisterSMSPage() {
                             <div className="w-10 h-10 rounded-full border border-[#10B981]/40 flex items-center justify-center bg-[#0B1120] shadow-[0_0_10px_rgba(16,185,129,0.2)]">
                                 <span className="material-icons-round text-lg">check_circle</span>
                             </div>
-                            <span className="text-[10px] font-bold tracking-[0.2em] uppercase">Registro</span>
+                            <span className="text-[10px] font-black tracking-[0.2em] uppercase">Registro</span>
                         </div>
-                        <div className="absolute top-1/2 left-[15%] w-[35%] h-0.5 bg-[#10B981]/50 -z-10 transform -translate-y-1/2 shadow-[0_0_8px_rgba(16,185,129,0.3)]"></div>
+                        <div className="absolute top-1/2 left-[15%] w-[35%] h-0.5 bg-[#10B981]/5 -z-10 transform -translate-y-1/2"></div>
                         <div className="flex flex-col items-center gap-2 relative bg-[#0B1120] px-3">
                             <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/4 w-14 h-14 bg-[#10B981]/25 rounded-full blur-xl animate-pulse"></div>
                             <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#10B981] to-emerald-600 text-white flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.5)] border-2 border-[#10B981]/20 relative z-10 transition-all">
                                 <span className="material-icons-round text-xl">smartphone</span>
                             </div>
-                            <span className="text-[10px] font-bold tracking-[0.2em] text-white uppercase mt-1">SMS</span>
+                            <span className="text-[10px] font-black tracking-[0.2em] text-white uppercase mt-1">SMS</span>
                         </div>
                         <div className="flex flex-col items-center gap-2 bg-[#0B1120] px-3 text-slate-600">
                             <div className="w-10 h-10 rounded-full border border-slate-800 flex items-center justify-center bg-[#0B1120]/50">
                                 <span className="material-icons-outlined text-lg">face</span>
                             </div>
-                            <span className="text-[10px] font-bold tracking-[0.2em] uppercase">Cara</span>
+                            <span className="text-[10px] font-black tracking-[0.2em] uppercase">Cara</span>
                         </div>
                     </div>
                 </div>
@@ -260,6 +271,7 @@ export default function RegisterSMSPage() {
                                         maxLength={1}
                                         value={digit}
                                         onChange={(e) => handleOtpChange(i, e.target.value)}
+                                        onKeyDown={(e) => handleKeyDown(i, e)}
                                         placeholder="•"
                                         className="w-12 h-16 rounded-xl bg-[#0f172a] border border-slate-800 focus:border-[#10B981] focus:ring-2 focus:ring-[#10B981]/20 text-white text-2xl font-black text-center transition-all outline-none"
                                     />

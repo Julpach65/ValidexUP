@@ -1,71 +1,66 @@
-# VALIDEX UP - Sistema de Autenticacion Biometrica Zero-Trust
+# VALIDEX UP - Unified Protection System
 
-Validex UP es una plataforma avanzada diseñada para eliminar el fraude y los errores operativos en entornos de logistica e industria pesada. El sistema asegura que ninguna accion critica se realice sin una verificacion estricta de tres factores, garantizando la identidad del operador en todo momento.
+SISTEMA DE AUTENTICACION BIOMETRICA Y CONTROL OPERATIVO INDUSTRIAL
 
-## Arquitectura de Seguridad
+Validex UP es una plataforma de alta seguridad diseñada para la mitigación de riesgos operativos y la prevención de fraude en sectores críticos como la logística y la industria pesada. El sistema implementa un modelo de autorización basado en una arquitectura Zero-Trust, asegurando la integridad de cada transacción mediante una validación secuencial de tres factores (3FA).
 
-El sistema implementa un modelo de confianza cero dividido en etapas secuenciales:
+## Arquitectura de Distribucion (Docker)
 
-1. Credenciales de Acceso: Validacion base de usuario y contraseña.
-2. Segundo Factor (MFA): Envio y verificacion de codigo SMS OTP.
-3. Verificacion Biometrica: Analisis facial mediante inteligencia artificial para comparar al operador contra la base de datos autorizada.
-4. Autorizacion: Acceso al panel de control y modulos operativos.
+El ecosistema se encuentra orquestado mediante Docker Compose, lo que garantiza la portabilidad y la paridad entre los entornos de desarrollo y producción. La arquitectura se divide en servicios independientes para optimizar la seguridad y el rendimiento:
 
-## Especificaciones Tecnicas
+### Gestion de Redes
+- **Red Interna (validex_internal):** Aísla la comunicación entre el backend y la base de datos MySQL. Esta red no tiene exposición externa ni acceso a servicios públicos de internet.
+- **Red de Aplicacion (validex_frontend):** Facilita el enlace seguro entre la interfaz de usuario y la API REST.
 
-El proyecto utiliza una pila tecnologica moderna y robusta:
+### Servicios Orquestados
+1. **Motor de Base de Datos:** MySQL 8.0 con persistencia de datos mediante volúmenes Docker.
+2. **Servidor de Aplicaciones (API):** Desarrollado en FastAPI, integrando librerías avanzadas de biometría (OpenCV y DeepFace).
+3. **Interfaz de Usuario (Frontend):** Aplicación Next.js 15 optimizada mediante compilación standalone para reducir la huella de memoria en contenedores.
 
-- Interfaz de Usuario: Next.js con Tailwind CSS y Framer Motion para animaciones de grado premium.
-- Servidor de Aplicaciones: Python con FastAPI de alto rendimiento.
-- Inteligencia Artificial: DeepFace y OpenCV para el reconocimiento facial.
-- Base de Datos: MySQL con SQLModel para la gestion de datos.
-- Seguridad: Implementacion de AuthGuard con validacion asincrona y ofuscacion de sesiones.
+## Pila Tecnologica
 
-## Guia de Instalacion y Ejecucion Local
+### Frontend
+- Framework: Next.js 15
+- Libreria de Interfaz: React 19
+- Estilos y Animaciones: Tailwind CSS y Framer Motion
+- Gestion de Estado: Zustand
 
-Para poner en marcha el sistema en un entorno de desarrollo, siga estos pasos:
+### Backend
+- Framework: FastAPI (Python 3.11)
+- ORM: SQLModel
+- Procesamiento de Imagen: OpenCV (Headless)
+- Inteligencia Artificial: DeepFace
 
-### Requisitos
+### Seguridad
+- Protocolos: JWT (JSON Web Tokens) con ofuscación de cliente.
+- Segundo Factor: SMS OTP integrado via Twilio.
+- Control de Acceso: Middleware AuthGuard con validación asíncrona de estado.
 
-- Python 3.10 o superior.
-- Node.js 18 o superior.
-- MySQL corriendo localmente.
+## Procedimiento de Despliegue
 
-### Inicio del Backend
+La implementación recomendada requiere Docker y Docker Compose instalados en el sistema anfitrión.
 
-1. Entre a la carpeta del servidor:
-   cd backend
-2. Inicie el servidor de aplicaciones:
-   python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-3. Verifique que el servidor indique que la aplicacion ha iniciado correctamente en el puerto 8000.
+### Ejecucion del Sistema
+Para construir e iniciar la arquitectura completa, ejecute el siguiente comando desde el directorio raíz:
 
-### Inicio del Frontend
+```bash
+docker-compose up --build
+```
 
-1. Entre a la carpeta de la interfaz en una nueva terminal:
-   cd validex_ui
-2. Inicie el modo de desarrollo:
-   npm run dev
-3. Acceda desde su navegador a: http://localhost:3000
+### Puertos de Servicio
+Una vez completado el despliegue, la plataforma será accesible en las siguientes direcciones:
+- Interfaz de Usuario: http://localhost:3000
+- Documentacion de API (Swagger): http://localhost:8000/docs
 
-## Protocolo de Verificacion de Calidad
+## Estructura del Proyecto
 
-Para asegurar que el sistema funciona correctamente despues de una actualizacion, realice las siguientes pruebas manuales:
+- **/backend:** Logica de negocio, servicios de identidad y endpoints de IA.
+- **/validex_ui:** Aplicacion cliente desarrollada en Next.js.
+- **/database:** Esquemas SQL y scripts de inicializacion de datos.
+- **/docker-compose.yml:** Definicion maestra de la infraestructura.
 
-### Flujo de Registro y Autenticacion
-- Realice un registro de cuenta nuevo para validar la persistencia en base de datos.
-- Verifique la recepcion del SMS (en modo de desarrollo se utiliza el codigo 123456 por defecto).
-- Realice la prueba de biometria facial asegurando que la iluminacion sea la correcta.
-- Confirme que el sistema le permite ingresar al panel principal tras la validacion exitosa.
+## Terminologia de Seguridad y Privacidad
 
-### Modulo de Operaciones
-- Ingrese al modulo de pipas y verifique que los indicadores de descarga en curso muestren informacion en tiempo real.
-- Confirme que al finalizar una operacion, el sistema muestre el resumen de validacion exitosa.
+El sistema incorpora tecnicas de blindaje contra errores de pre-renderizado (SSR) y gestiona el ciclo de vida de los procesos para evitar estados huerfanos. Todas las transacciones biometricas son comparadas contra una base de datos local pre-autorizada bajo rigurosos protocolos de cumplimiento industrial.
 
-## Organizacion del Repositorio
-
-- /backend: Logica de servidor, API y servicios de inteligencia artificial.
-- /validex_ui: Codigo fuente de la interfaz de usuario en Next.js.
-- /database: Scripts de migracion y esquemas SQL.
-- /tools: Herramientas de diagnostico y mantenimiento.
-
-Validex UP es propiedad intelectual protegida. Todos los derechos reservados 2026.
+PROPIEDAD INTELECTUAL PROTEGIDA. TODOS LOS DERECHOS RESERVADOS 2026.

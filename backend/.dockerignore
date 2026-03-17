@@ -1,0 +1,37 @@
+# .dockerignore para el Backend (FastAPI)
+# Excluye archivos que NO deben entrar al contenedor (seguridad y eficiencia)
+
+# Entornos virtuales de Python
+venv/
+.venv/
+env/
+.env/
+
+# Cache de Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+
+# Archivos temporales y de test
+*.log
+*.tmp
+.shadow_state/
+nul
+
+# Archivos de configuracion de IDE
+.vscode/
+.idea/
+*.swp
+
+# Git
+.git/
+.gitignore
+
+# Archivos de Windows
+Thumbs.db
+desktop.ini
+
+# El .env NO entra al contenedor (se inyecta por env_file en docker-compose)
+.env

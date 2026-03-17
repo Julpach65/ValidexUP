@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { API_BASE_URL } from '@/config/api'
 import React, { useRef, useState, useEffect } from 'react'
 
 export default function LoginCaraPage() {
@@ -39,7 +40,7 @@ export default function LoginCaraPage() {
     useEffect(() => {
         if (accessGranted) {
             // 1. Secuencia de mensajes de estado
-            setTimeout(() => setSystemStatus("Coincidencia encontrada ✓"), 1000);
+            setTimeout(() => setSystemStatus("Coincidencia encontrada Ô£ô"), 1000);
             setTimeout(() => setSystemStatus("Cargando perfil de seguridad..."), 2000);
 
             // 2. Limpieza y redirección
@@ -51,25 +52,47 @@ export default function LoginCaraPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [accessGranted]);
 
+    const [cameraError, setCameraError] = useState<string | null>(null);
+
     const startCamera = async () => {
+        setCameraError(null);
         try {
             const mediaStream = await navigator.mediaDevices.getUserMedia({ 
                 video: { facingMode: 'user', width: 1280, height: 720 } 
             });
             setStream(mediaStream);
             if (videoRef.current) videoRef.current.srcObject = mediaStream;
-        } catch (err) {
+        } catch (err: any) {
             console.error("Error cámara:", err);
-            alert("Se necesita acceso a la cámara para verificar tu identidad.");
+            let errorMessage = "No se pudo acceder a la cámara. Por favor, verifica los permisos.";
+            if (err.name === 'NotAllowedError') errorMessage = "Acceso a la cámara denegado. Actívala en la configuración de tu navegador.";
+            if (err.name === 'NotFoundError') errorMessage = "No se encontró ninguna cámara disponible en este dispositivo.";
+            setCameraError(errorMessage);
         }
     };
+
+    const [isShaking, setIsShaking] = useState(false);
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Enter' && !isLoading && !accessGranted && !cameraError) {
+                handleVerifyFace();
+            } else if (e.key === 'Escape') {
+                router.back();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isLoading, accessGranted, cameraError, router]);
 
     const handleVerifyFace = async () => {
         const video = videoRef.current;
         const canvas = canvasRef.current;
-        if (!video || !canvas || !userId) return;
+        if (!video || !canvas || !userId || isLoading) return;
 
         setIsLoading(true);
+        setSystemStatus("Capturando imagen de alta fidelidad...");
+        
         const context = canvas.getContext('2d');
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
@@ -77,8 +100,10 @@ export default function LoginCaraPage() {
         
         const cleanBase64 = canvas.toDataURL('image/jpeg', 0.8).replace(/^data:image\/\w+;base64,/, "");
 
+        setSystemStatus("Analizando firma biométrica...");
+
         try {
-            const response = await fetch('http://localhost:8000/api/v1/auth/verify-face-login', {
+            const response = await fetch(`${API_BASE_URL}/auth/verify-face-login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ user_id: parseInt(userId), image_data: cleanBase64 }),
@@ -87,16 +112,22 @@ export default function LoginCaraPage() {
             const data = await response.json();
 
             if (response.ok) {
-                // --- DISPARAMOS LA SECUENCIA DE BIENVENIDA ---
+                // Éxito: Guardamos el token si viene uno nuevo, aunque aquí usualmente ya lo tenemos
+                if (data.access_token) {
+                    localStorage.setItem('access_token', data.access_token);
+                }
                 setUserName(data.user_name || "Usuario");
                 setAccessGranted(true);
             } else {
-                // Si la cara no coincide o hay otro error
-                alert(`Acceso denegado: ${data.detail || "Rostro no reconocido"}`);
+                setSystemStatus("Validación fallida. Reintenta.");
+                setIsShaking(true);
+                setTimeout(() => setIsShaking(false), 500);
+                alert(`Acceso denegado: ${data.detail || "Cara no reconocida"}`);
             }
         } catch (error) {
             console.error("Error de red:", error);
-            alert("Error de conexión con el servidor.");
+            setSystemStatus("Error de conexión.");
+            alert("Error de conexión con el servidor. Verifica que el backend esté corriendo.");
         } finally {
             setIsLoading(false);
         }
@@ -107,7 +138,7 @@ export default function LoginCaraPage() {
         return (
             <div className="h-screen w-full bg-black flex flex-col items-center justify-center relative overflow-hidden font-mono">
                 {/* Audio para el efecto de sonido */}
-                <audio src="/sounds/AudioBienvenida.mp3" autoPlay preload="auto"></audio>
+                <audio src="/sounds/Brazino777.mp3" autoPlay preload="auto"></audio>
 
                 {/* Fondo animado de rejilla */}
                 <div className="absolute inset-0 opacity-20 bg-[linear-gradient(to_right,#10B981_1px,transparent_1px),linear-gradient(to_bottom,#10B981_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)]"></div>
@@ -130,9 +161,9 @@ export default function LoginCaraPage() {
                         </p>
                     </div>
 
-                    {/* Título y Nombre */}
+                    {/* T├¡tulo y Nombre */}
                     <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tighter">
-                        Bienvenido, <span className="text-[#10B981]">{userName}</span>
+                        Bienvenido/a, <span className="text-[#10B981]">{userName}</span>
                     </h1>
                     
                     <p className="text-slate-400 mt-2">Acceso autorizado a la plataforma Validex UP.</p>
@@ -172,28 +203,28 @@ export default function LoginCaraPage() {
                         {/* Línea de fondo */}
                         <div className="absolute top-1/2 left-0 w-full h-0.5 bg-[#10B981]/20 -z-10 transform -translate-y-1/2"></div>
                         
-                        {/* Paso 1: Credenciales (Completado) */}
+                        {/* Paso 1: Login (Completado) */}
                         <div className="flex flex-col items-center gap-1">
-                            <div className="w-8 h-8 rounded-full bg-[#0B111D] border border-[#10B981] flex items-center justify-center text-[#10B981]">
-                                <span className="material-icons-round text-sm">lock</span>
+                            <div className="w-8 h-8 rounded-full bg-[#0B111D] border border-[#10B981]/40 flex items-center justify-center text-[#10B981] shadow-[0_0_10px_rgba(16,185,129,0.2)]">
+                                <span className="material-icons-round text-sm">check_circle</span>
                             </div>
-                            <span className="text-[9px] font-bold tracking-widest text-[#10B981] uppercase opacity-60">Cuenta</span>
+                            <span className="text-[9px] font-black tracking-widest text-[#10B981] uppercase opacity-70">Login</span>
                         </div>
 
                         {/* Paso 2: SMS (Completado) */}
                         <div className="flex flex-col items-center gap-1">
-                            <div className="w-8 h-8 rounded-full bg-[#0B111D] border border-[#10B981] flex items-center justify-center text-[#10B981]">
-                                <span className="material-icons-round text-sm">smartphone</span>
+                            <div className="w-8 h-8 rounded-full bg-[#0B111D] border border-[#10B981]/40 flex items-center justify-center text-[#10B981] shadow-[0_0_10px_rgba(16,185,129,0.2)]">
+                                <span className="material-icons-round text-sm">check_circle</span>
                             </div>
-                            <span className="text-[9px] font-bold tracking-widest text-[#10B981] uppercase opacity-60">SMS</span>
+                            <span className="text-[9px] font-black tracking-widest text-[#10B981] uppercase opacity-70">SMS</span>
                         </div>
 
                         {/* Paso 3: Biometría (Activo) */}
                         <div className="flex flex-col items-center gap-1">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#10B981] to-emerald-600 text-white flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.5)] border-2 border-[#10B981]/20 relative z-10">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#10B981] to-emerald-600 text-white flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.5)] border-2 border-[#10B981]/20 relative z-10 transition-all">
                                 <span className="material-icons-round text-lg">face</span>
                             </div>
-                            <span className="text-[9px] font-bold tracking-widest text-white uppercase mt-1">Rostro</span>
+                            <span className="text-[9px] font-black tracking-widest text-white uppercase mt-1">Cara</span>
                         </div>
                     </div>
                 </div>
@@ -213,14 +244,29 @@ export default function LoginCaraPage() {
                     </div>
 
                     <div className="flex-1 w-full min-h-0 flex items-center justify-center relative">
-                        <div className="relative h-full aspect-[4/3] max-w-full bg-black rounded-2xl overflow-hidden shadow-2xl border border-slate-700/50">
-                            <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover scale-x-[-1]" />
+                        <div className={`relative h-full aspect-[4/3] max-w-full bg-black rounded-2xl overflow-hidden shadow-2xl border border-slate-700/50 transition-all ${isShaking ? 'shake-error border-red-500/50' : ''}`}>
+                            {cameraError ? (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center p-8 bg-slate-950/80 backdrop-blur-md z-30 text-center space-y-4">
+                                    <span className="material-icons-round text-6xl text-red-500 animate-pulse">videocam_off</span>
+                                    <p className="text-white font-bold text-sm leading-relaxed">{cameraError}</p>
+                                    <button 
+                                        onClick={startCamera}
+                                        className="px-6 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full text-white text-[10px] font-black tracking-widest uppercase transition-all"
+                                    >
+                                        REINTENTAR ACCESO
+                                    </button>
+                                </div>
+                            ) : (
+                                <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover scale-x-[-1]" />
+                            )}
                             <canvas ref={canvasRef} className="hidden" />
                             
-                            <div className="absolute top-4 right-4 flex items-center gap-2 bg-black/50 backdrop-blur px-3 py-1 rounded-full border border-white/10">
-                                <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-white">REC</span>
-                            </div>
+                            {!cameraError && (
+                                <div className="absolute top-4 right-4 flex items-center gap-2 bg-black/50 backdrop-blur px-3 py-1 rounded-full border border-white/10">
+                                    <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-white">REC</span>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -230,11 +276,13 @@ export default function LoginCaraPage() {
                             disabled={isLoading}
                             className={`group relative inline-flex items-center gap-3 px-10 py-5 bg-gradient-to-br from-[#10B981] to-[#059669] rounded-2xl text-white font-bold text-lg shadow-lg transition-all hover:-translate-y-1 w-full md:min-w-[340px] justify-center ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
-                            <span className="material-icons-round text-2xl">
-                                {isLoading ? 'sync' : 'fingerprint'}
-                            </span>
+                            {isLoading && (
+                                <span className="material-icons-round text-2xl animate-spin">
+                                    sync
+                                </span>
+                            )}
                             <span>
-                                {isLoading ? 'Verificando...' : 'Autenticar Acceso'}
+                                {isLoading ? 'Verificando...' : 'Verificar rostro'}
                             </span>
                         </button>
                     </div>

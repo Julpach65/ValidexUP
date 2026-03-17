@@ -9,18 +9,27 @@ export const metadata: Metadata = {
   description: 'Sistema B2B de Autorización Geométrica y Acceso Táctico',
 };
 
+import NeuralBackground from '@/components/ui/NeuralBackground';
+import CinematicTransition from '@/components/layout/CinematicTransition';
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es" className="dark">
+    <html lang="es" className="dark" suppressHydrationWarning>
       <head>
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons|Material+Icons+Outlined|Material+Icons+Round" rel="stylesheet" />
       </head>
-      <body className={`${inter.className} bg-slate-900 text-slate-300 antialiased selection:bg-emerald-500 selection:text-white`}>
-        {children}
+      <body
+        className={`${inter.className} bg-slate-900 text-slate-300 antialiased selection:bg-emerald-500 selection:text-white relative`}
+        suppressHydrationWarning
+      >
+        <NeuralBackground />
+        <CinematicTransition>
+          {children}
+        </CinematicTransition>
       </body>
     </html>
   );

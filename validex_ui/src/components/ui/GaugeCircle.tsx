@@ -1,4 +1,5 @@
 'use client'
+import { motion, AnimatePresence } from 'framer-motion'
 
 interface Props {
     value: number   // 0-100
@@ -20,21 +21,41 @@ export default function GaugeCircle({ value, maxLabel = '15,000 L', currentLabel
                 {/* Track */}
                 <circle cx="98" cy="98" r={r} fill="none" stroke="#1E293B" strokeWidth="12" />
                 {/* Progress */}
-                <circle
+                <motion.circle
                     cx="98" cy="98" r={r}
                     fill="none"
                     stroke={color}
                     strokeWidth="12"
                     strokeLinecap="round"
                     strokeDasharray={circ}
-                    strokeDashoffset={offset}
-                    style={{ transition: 'stroke-dashoffset 1s ease, stroke 0.5s ease', filter: `drop-shadow(0 0 8px ${color}80)` }}
+                    initial={{ strokeDashoffset: circ }}
+                    animate={{ strokeDashoffset: offset }}
+                    transition={{ duration: 1.5, ease: "easeInOut" }}
+                    style={{ filter: `drop-shadow(0 0 12px ${color}80)` }}
                 />
             </svg>
             <div className="absolute flex flex-col items-center">
-                <span className="text-3xl font-bold text-white">{displayVal}</span>
-                <span className="text-xs text-gray-400 mt-1">de {maxLabel}</span>
+                <AnimatePresence mode="wait">
+                    <motion.span 
+                        key={displayVal}
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -5 }}
+                        className="text-3xl font-black text-white tracking-tighter"
+                    >
+                        {displayVal}
+                    </motion.span>
+                </AnimatePresence>
+                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1 opacity-60">de {maxLabel}</span>
             </div>
+            
+            {/* Ambient Pulse */}
+            <motion.div 
+                animate={{ scale: [1, 1.05, 1], opacity: [0.1, 0.2, 0.1] }}
+                transition={{ repeat: Infinity, duration: 3 }}
+                className="absolute inset-0 rounded-full pointer-events-none"
+                style={{ backgroundColor: color, filter: 'blur(40px)' }}
+            />
         </div>
     )
 }

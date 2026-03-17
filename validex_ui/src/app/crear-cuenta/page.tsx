@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '@/config/api';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import OnboardingSidebar from '@/components/layout/OnboardingSidebar';
@@ -11,15 +12,22 @@ export default function CrearCuentaPage() {
     const [formData, setFormData] = useState({
         nombre_completo: '',
         email: '',
-        password: ''
+        password: '',
+        rol: 'GERENTE'
     });
     const [isLoading, setIsLoading] = useState(false);
     const [isPasswordValid, setIsPasswordValid] = useState(false);
     const [emailError, setEmailError] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
+    
+    // Limpiar cualquier sesión previa al iniciar un nuevo registro
+    React.useEffect(() => {
+        localStorage.clear();
+        console.log("[Auth] Sesiones previas limpiadas para nuevo registro.");
+    }, []);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
         
@@ -49,21 +57,23 @@ export default function CrearCuentaPage() {
 
         setIsLoading(true);
 
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
         try {
-            const response = await fetch('http://localhost:8000/api/v1/auth/register', {
+            const response = await fetch(`${API_BASE_URL}/auth/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    ...formData,
-                    rol: 'GERENTE'
-                }),
+                body: JSON.stringify(formData),
+                signal: controller.signal
             });
 
+            clearTimeout(timeoutId);
             const data = await response.json();
 
             if (response.ok) {
                 localStorage.setItem('id_usuario_actual', data.id_usuario);
-                localStorage.setItem('registration_step', 'sms'); // 🛠️ FIX: Guardamos el paso actual
+                localStorage.setItem('registration_step', 'sms'); // ️ FIX: Guardamos el paso actual
                 setIsSuccess(true); // Activa la animación de éxito
                 setTimeout(() => {
                     router.push('/verificar-sms');
@@ -71,9 +81,13 @@ export default function CrearCuentaPage() {
             } else {
                 alert(`Error en el registro: ${data.detail || 'Ocurrió un error.'}`);
             }
-        } catch (error) {
-            console.error("Error de conexión:", error);
-            alert("No se pudo conectar con el servidor. Intente más tarde.");
+        } catch (error: any) {
+            if (error.name === 'AbortError') {
+                alert("El servidor de seguridad no responde (Timeout). Reintentando conexión...");
+            } else {
+                console.error("Error de conexión:", error);
+                alert("No se pudo conectar con el servidor. Intente más tarde.");
+            }
         } finally {
             setIsLoading(false);
         }
@@ -91,30 +105,30 @@ export default function CrearCuentaPage() {
             <OnboardingSidebar />
 
             <main className="flex-1 flex flex-col items-center justify-start p-6 pt-8 sm:px-12 pb-12 relative z-10">
-                {/* Stepper */}
-                <div className="w-full max-w-md mb-6 relative">
+                {/* Stepper centrado */}
+                <div className="w-full max-w-md mb-12 relative mx-auto">
                     <div className="flex items-center justify-between relative">
-                        <div className="absolute top-1/2 left-0 w-full h-0.5 bg-slate-800 -z-10"></div>
+                        <div className="absolute top-1/2 left-0 w-full h-0.5 bg-slate-800 -z-10 transform -translate-y-1/2"></div>
                         <div className="flex flex-col items-center gap-2 relative bg-[#0B1120] px-3">
                             <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/4 w-14 h-14 bg-[#10B981]/25 rounded-full blur-xl animate-pulse"></div>
                             <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#10B981] to-emerald-600 text-white flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.5)] border-2 border-[#10B981]/20 z-10">
                                 <span className="material-icons-round text-xl">person_add</span>
                             </div>
-                            <span className="text-[10px] font-bold tracking-[0.2em] text-white uppercase mt-1">Registro</span>
+                            <span className="text-[10px] font-black tracking-[0.2em] text-white uppercase mt-1">Registro</span>
                         </div>
                         <div className="flex flex-col items-center gap-2 bg-[#0B1120] px-3 text-slate-600">
                             <div className="w-10 h-10 rounded-full border border-slate-800 flex items-center justify-center bg-[#0B1120]/50"><span className="material-icons-round text-lg">smartphone</span></div>
-                            <span className="text-[10px] font-bold tracking-[0.2em] uppercase">SMS</span>
+                            <span className="text-[10px] font-black tracking-[0.2em] uppercase">SMS</span>
                         </div>
                         <div className="flex flex-col items-center gap-2 bg-[#0B1120] px-3 text-slate-600">
                             <div className="w-10 h-10 rounded-full border border-slate-800 flex items-center justify-center bg-[#0B1120]/50"><span className="material-icons-outlined text-lg">face</span></div>
-                            <span className="text-[10px] font-bold tracking-[0.2em] uppercase">Cara</span>
+                            <span className="text-[10px] font-black tracking-[0.2em] uppercase">Cara</span>
                         </div>
                     </div>
                 </div>
 
                 {/* Contenedor Principal Split (Formulario Izq | Validaciones Der) */}
-                <div className={`w-full max-w-5xl flex flex-col lg:flex-row gap-12 items-start justify-center transition-all duration-700 ease-in-out ${isSuccess ? 'opacity-0 translate-x-24 blur-sm' : 'animate-in fade-in slide-in-from-bottom-6'}`}>
+                <div className={`w-full max-w-6xl mx-auto flex flex-col lg:flex-row gap-8 lg:gap-16 items-start justify-center transition-all duration-700 ease-in-out ${isSuccess ? 'opacity-0 translate-x-24 blur-sm' : ''}`}>
                     
                     {/* Columna Izquierda: Formulario */}
                     <div className="w-full max-w-md space-y-8 flex-1">
@@ -144,6 +158,25 @@ export default function CrearCuentaPage() {
                                     className={`w-full h-14 bg-transparent border rounded-xl text-white px-5 focus:outline-none focus:ring-2 text-base font-medium transition-all ${emailError ? 'border-red-500 focus:ring-red-500/40' : 'border-slate-800 focus:ring-[#10B981]/40 focus:border-[#10B981]'}`} 
                                 />
                                 {emailError && <p className="text-red-400 text-xs font-bold ml-1 animate-pulse">{emailError}</p>}
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-[10px] uppercase tracking-[0.3em] font-black text-slate-500 ml-1">Rol de Acceso</label>
+                                <div className="relative">
+                                    <select 
+                                        name="rol"
+                                        value={formData.rol}
+                                        onChange={handleChange}
+                                        className="w-full h-14 bg-[#0B1120] border border-slate-800 rounded-xl text-white px-5 focus:outline-none focus:ring-2 focus:ring-[#10B981]/40 focus:border-[#10B981] appearance-none cursor-pointer font-medium transition-all"
+                                    >
+                                        <option value="GERENTE">Gerente de Planta (Autorización)</option>
+                                        <option value="ADMIN">Administrador (Gestión & Auditoría)</option>
+                                        <option value="VISOR">Visor (Solo Lectura de Bitácora)</option>
+                                    </select>
+                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                                        <span className="material-icons-round">expand_more</span>
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="space-y-2">
@@ -192,7 +225,7 @@ export default function CrearCuentaPage() {
                     </div>
 
                     {/* Columna Derecha: Panel de Seguridad (Alado) */}
-                    <div className="w-full max-w-md lg:w-80 lg:mt-10 p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
+                    <div className="w-full max-w-md lg:w-96 lg:mt-24 p-8 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm self-start shadow-2xl">
                         <h3 className="text-white font-bold text-sm uppercase tracking-wider mb-4 flex items-center gap-2">
                             <span className="material-icons-round text-[#10B981]">security</span> Requisitos de Seguridad
                         </h3>

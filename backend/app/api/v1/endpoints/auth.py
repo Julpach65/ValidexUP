@@ -18,6 +18,7 @@ from app.models.sesiones import Sesion
 
 from app.schemas.user import UsuarioCreate, UsuarioOut
 from app.schemas.token import Token
+from app.api import deps
 
 router = APIRouter()
 
@@ -218,9 +219,20 @@ def register_face(data: FaceRegisterRequest, session: Session = Depends(get_sess
     # Guardamos todos los cambios (Usuario y Sesión)
     session.commit()
     
+    # 3. GENERACIÓN DE TOKEN PARA LOGIN AUTOMÁTICO POST-REGISTRO
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = security.create_access_token(
+        subject=user.id_usuario, expires_delta=access_token_expires
+    )
+    
     return {
         "status": "success",
-        "message": f"Rostro de {user.nombre_completo} registrado y seguridad completada."
+        "message": f"Rostro de {user.nombre_completo} registrado y seguridad completada.",
+        "access_token": access_token,
+        "token_type": "bearer",
+        "id_usuario": user.id_usuario,
+        "nombre_completo": user.nombre_completo,
+        "rol": user.rol
     }
 
     # Seccion de verificar Rostro 
@@ -293,3 +305,14 @@ def verify_face_login(data: FaceRegisterRequest, session: Session = Depends(get_
         "message": f"Identidad verificada correctamente. ¡Bienvenido, {user.nombre_completo}!",
         "user_name": user.nombre_completo
     }
+
+@router.get("/me", response_model=UsuarioOut)
+def read_users_me(
+    current_user: Usuario = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Obtener el usuario actual (Conectado via Token JWT).
+    """
+    return current_user
+
+

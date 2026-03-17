@@ -9,10 +9,10 @@ export const APP_INFO = {
 };
 
 export const USER_MOCK = {
-    name: "EL NOYER",
-    role: "PATRON",
+    name: "Cargando Identidad...",
+    role: "Sistema",
     avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuAgiNZ7npo88yTlikH_HPIinhlnkNFRxTs5p5KyK0a0bmu6kHs7Xzm2mI14X4WjbqN12qvE88pwRQwdyB06dV3UkeYo64hMk4UOyC4yf3w8QRyp2hVCjvm7UUmBAVFk0LdQNZozCoawVIDlcBip6W2AQTFb_p8LM-hpq0C01V9AhkUNB4r9JynrnUQ6mousY2ZappFun2JJQIsk8XvF5_sIycm6lEI5NTTP0VabHsjX_jbltqiCrxWgWuFQcJvnMEp7GhPfO5-6yZA",
-    email: "elnoyer@validex.com"
+    email: "identidad@validex.com"
 };
 
 export const LOGS_MOCK = [

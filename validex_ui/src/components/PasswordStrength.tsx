@@ -21,15 +21,19 @@ export default function PasswordStrength({ password = '', onValidationChange }: 
     useEffect(() => {
         const newValidation: Record<string, boolean> = {};
         let allValid = true;
-        for (const req of requirements) {
+        
+        requirements.forEach(req => {
             const isValid = req.regex.test(password);
             newValidation[req.id] = isValid;
             if (!isValid) allValid = false;
-        }
-        setValidation(newValidation);
-        onValidationChange(allValid);
+        });
 
-    }, [password, onValidationChange]);
+        setValidation(newValidation);
+        
+        // Solo llamamos al callback si el valor de allValid ha cambiado o es inicial
+        onValidationChange(allValid);
+    }, [password]); // Eliminamos onValidationChange de las dependencias para evitar loops
+
 
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-xs">
