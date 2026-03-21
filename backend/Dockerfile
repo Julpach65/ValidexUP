@@ -22,6 +22,10 @@ RUN addgroup --gid 1001 validexgroup && \
 
 WORKDIR /app
 
+# Crear carpetas necesarias y asegurar permisos para el usuario no-root
+RUN mkdir -p /app/.shadow_state && \
+    chown -R validexuser:validexgroup /app
+
 # Copiar requirements primero para aprovechar cache de capas.
 # Si el codigo cambia pero requirements no, esta capa no se reconstruye.
 COPY requirements.txt .

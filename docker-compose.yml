@@ -68,8 +68,9 @@ services:
     container_name: validex_frontend
     restart: unless-stopped
     environment:
-      # En Docker, el proxy apunta al nombre del servicio 'backend'
-      NEXT_PUBLIC_API_URL: http://backend:8000
+      # En Docker para desarrollo/test universal, el navegador del usuario
+      # debe apuntar a 'localhost' para resolver el backend expuesto.
+      NEXT_PUBLIC_API_URL: http://localhost:8000
     ports:
       - "3000:3000"  # Puerto accesible desde el navegador del usuario
     networks:
