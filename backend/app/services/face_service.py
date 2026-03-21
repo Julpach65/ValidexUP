@@ -43,8 +43,8 @@ def get_face_embedding(base64_image):
     faces = face_cascade.detectMultiScale(
         gray,
         scaleFactor=1.1,
-        minNeighbors=5, # Un valor más alto para ser más estricto
-        minSize=(100, 100) # Ignorar caras muy pequeñas que puedan ser falsos positivos
+        minNeighbors=4, 
+        minSize=(60, 60) 
     )
 
     # 3. FILTRO DE SEGURIDAD 1: Múltiples rostros
@@ -79,7 +79,7 @@ def get_face_embedding(base64_image):
         print(f"Error interno de DeepFace durante la representación: {e}")
         raise ValueError("NO_FACE_DETECTED") from e
 
-def verify_face_match(stored_embedding_str: str, current_embedding: list, threshold: float = 0.40) -> bool:
+def verify_face_match(stored_embedding_str: str, current_embedding: list, threshold: float = 0.35) -> bool:
     """
     Compara el embedding guardado en BD (TEXT/JSON) con el nuevo capturado (List).
     Usa Distancia Coseno.
@@ -87,7 +87,7 @@ def verify_face_match(stored_embedding_str: str, current_embedding: list, thresh
     Args:
         stored_embedding_str: String JSON de la base de datos (ej. "[0.1, 0.2...]")
         current_embedding: Lista de floats generada por DeepFace en este momento.
-        threshold: L├¡mite de tolerancia (0.40 recomendado para VGG-Face/Cosine).
+        threshold: L├¡mite de tolerancia (0.35 estricto recomendado para VGG-Face/Cosine).
         
     Returns:
         True si la distancia es MENOR al umbral (Es la misma persona).

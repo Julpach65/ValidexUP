@@ -14,6 +14,7 @@ class OperacionIniciarRequest(BaseModel):
     id_pipa: int
     volumen_objetivo: Decimal
     tipo_combustible: str
+    image_data: str
 
 
 class OperacionOut(BaseModel):

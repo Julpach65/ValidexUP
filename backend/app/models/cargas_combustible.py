@@ -13,3 +13,5 @@ class CargaCombustible(SQLModel, table=True):
     tipo_combustible: str  # MAGNA, PREMIUM, DIESEL
     autorizado_por: int = Field(foreign_key="Usuario.id_usuario")
     fecha_carga: datetime = Field(default_factory=datetime.utcnow)
+    estado_carga: Optional[str] = None
+    litros_objetivo: Optional[Decimal] = None

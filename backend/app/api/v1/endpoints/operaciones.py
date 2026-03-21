@@ -16,6 +16,7 @@ from app.models.usuarios import Usuario
 from app.schemas.operaciones import OperacionIniciarRequest, OperacionOut, BitacoraOut
 from app.api import deps
 from app.services import discharge_engine
+from app.services.face_service import get_face_embedding, verify_face_match
 from app.core.config import settings
 
 router = APIRouter()
@@ -92,6 +93,33 @@ async def iniciar_descarga_combustible(
     pipa = session.get(Pipa, carga_in.id_pipa)
     if not pipa:
         raise HTTPException(status_code=404, detail="La Pipa especificada no existe.")
+
+    # 1. VERIFICACIÓN BIOMÉTRICA ATÓMICA
+    if not current_user.face:
+        raise HTTPException(status_code=400, detail="El Gerente no tiene biometría registrada.")
+    
+    try:
+        current_embedding = get_face_embedding(carga_in.image_data)
+    except ValueError as e:
+        error_str = str(e)
+        if "MULTIPLE_FACES_DETECTED" in error_str:
+            msg = "Seguridad: Se han detectado varias personas en camara. Por tu seguridad, debes estar solo."
+        elif "FACE_TOO_SMALL_OR_PARTIAL" in error_str:
+            msg = "Calidad: Estas muy lejos o tu rostro esta incompleto. Acercate mas a la camara."
+        else: # Cubre NO_FACE_DETECTED, etc.
+            msg = "No se detecto ningun rostro. Por favor, asegurate de estar frente a la camara y con buena iluminacion."
+        raise HTTPException(status_code=400, detail=msg)
+
+    if not verify_face_match(current_user.face, current_embedding, threshold=0.55):
+        # Log del intento fallido
+        log_fallido = Bitacora(
+            id_usuario=current_user.id_usuario,
+            accion="Intento de Descarga Rechazado",
+            detalles=f"Suplantacion detectada: Biometria no coincidio al intentar descargar pipa {pipa.placa}.",
+        )
+        session.add(log_fallido)
+        session.commit()
+        raise HTTPException(status_code=400, detail="Validacion biometrica fallida. Orden de descarga rechazada.")
 
     if pipa.estado != "ACTIVA":
         raise HTTPException(
@@ -185,7 +213,7 @@ def consultar_estado_operacion(
 async def interrumpir_descarga(
     id_operacion: int,
     session: Session = Depends(get_session),
-    current_user: Usuario = Depends(deps.get_current_active_user),
+    current_user: Usuario = Depends(deps.get_mfa_verified_user),
 ) -> Any:
     """
     PARO DE EMERGENCIA: Cancela la tarea asíncrona de descarga.
@@ -247,7 +275,7 @@ async def interrumpir_descarga(
 async def finalizar_descarga_manual(
     id_operacion: int,
     session: Session = Depends(get_session),
-    current_user: Usuario = Depends(deps.get_current_active_user),
+    current_user: Usuario = Depends(deps.get_mfa_verified_user),
 ) -> Any:
     """
     Cierra formalmente la operación y crea el registro final en CargasCombustible.
@@ -349,7 +377,7 @@ async def websocket_descarga(
 @router.get("/bitacora", response_model=List[BitacoraOut])
 def read_bitacora(
     session: Session = Depends(get_session),
-    current_user: Usuario = Depends(deps.get_current_active_user),
+    current_user: Usuario = Depends(deps.get_mfa_verified_user),
 ) -> Any:
     """Lista todos los eventos de seguridad y operaciones (últimos 100)."""
     query = (

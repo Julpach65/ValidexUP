@@ -24,4 +24,4 @@ class UsuarioOut(UsuarioBase):
     class Config:
         from_attributes = True
 
-
+

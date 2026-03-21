@@ -35,6 +35,10 @@ class FaceRegisterRequest(SQLModel):
     user_id: int
     image_data: str
 
+class ResendOTPRequest(SQLModel):
+    id_usuario: int
+
+
 # --- ENDPOINTS ---
 
 @router.post("/login", response_model=Token)
@@ -63,14 +67,29 @@ def login_access_token(
 
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = security.create_access_token(
-        subject=user.id_usuario, expires_delta=access_token_expires
+        subject=user.id_usuario, sid=sesion_activa.id_sesion, expires_delta=access_token_expires
     )
+    
+    # Auto-envío de OTP en modo Login (Anti-Takeover)
+    has_phone = bool(user.telefono)
+    if has_phone:
+        code = f"{random.randint(100000, 999999)}"
+        otp_entry = CodigoOTP(
+            id_usuario=user.id_usuario,
+            codigo=code,
+            expira_at=datetime.utcnow() + timedelta(minutes=5),
+            usado=False
+        )
+        session.add(otp_entry)
+        session.commit()
+        enviar_codigo_custom(user.telefono, code)
     
     return {
         "access_token": access_token, 
         "token_type": "bearer",
         "id_usuario": user.id_usuario,
-        "rol": user.rol
+        "rol": user.rol,
+        "has_phone": has_phone
     }
 
 @router.post("/register", response_model=UsuarioOut)
@@ -134,6 +153,25 @@ def request_new_otp(body: RequestOTP, session: Session = Depends(get_session)) -
     
     return {"msg": "Código enviado correctamente", "status": "OTP_SENT"}
 
+@router.post("/resend-login-otp")
+def resend_login_otp(body: ResendOTPRequest, session: Session = Depends(get_session)) -> Any:
+    user = session.get(Usuario, body.id_usuario)
+    if not user or not user.telefono:
+        raise HTTPException(status_code=400, detail="Usuario sin teléfono registrado o no encontrado")
+
+    code = f"{random.randint(100000, 999999)}"
+    otp_entry = CodigoOTP(
+        id_usuario=user.id_usuario,
+        codigo=code,
+        expira_at=datetime.utcnow() + timedelta(minutes=5),
+        usado=False
+    )
+    session.add(otp_entry)
+    session.commit()
+    enviar_codigo_custom(user.telefono, code)
+    
+    return {"msg": "Código reenviado automáticamente al número seguro", "status": "OTP_RESENT"}
+
 @router.post("/verify-otp")
 def verify_sms(body: VerifySMSRequest, session: Session = Depends(get_session)) -> Any:
     statement = select(CodigoOTP).where(
@@ -182,17 +220,17 @@ def register_face(data: FaceRegisterRequest, session: Session = Depends(get_sess
         if "MULTIPLE_FACES_DETECTED" in error_str:
             raise HTTPException(
                 status_code=400, 
-                detail="Se detectaron múltiples rostros. Para el registro debes estar solo."
+                detail="Se han detectado varias personas en camara. Por tu seguridad, debes estar solo."
             )
         elif "FACE_TOO_SMALL_OR_PARTIAL" in error_str:
             raise HTTPException(
                 status_code=400,
-                detail="Rostro parcial o muy lejano. Acércate y mira de frente a la cámara para el registro."
+                detail="Estas muy lejos o tu rostro esta incompleto. Acercate mas a la camara."
             )
         else: # Cubre NO_FACE_DETECTED, etc.
             raise HTTPException(
                 status_code=400, 
-                detail="No se pudo detectar un rostro. Intenta con mejor iluminación."
+                detail="No se detecto ningun rostro. Por favor, asegurate de estar frente a la camara y con buena iluminacion."
             )
     
     user = session.get(Usuario, data.user_id)
@@ -219,10 +257,12 @@ def register_face(data: FaceRegisterRequest, session: Session = Depends(get_sess
     # Guardamos todos los cambios (Usuario y Sesión)
     session.commit()
     
-    # 3. GENERACIÓN DE TOKEN PARA LOGIN AUTOMÁTICO POST-REGISTRO
+    # 3. GENERACION DE TOKEN PARA LOGIN AUTOMATICO POST-REGISTRO
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = security.create_access_token(
-        subject=user.id_usuario, expires_delta=access_token_expires
+        subject=user.id_usuario, 
+        sid=db_session.id_sesion if db_session else 0,
+        expires_delta=access_token_expires
     )
     
     return {
@@ -249,17 +289,17 @@ def verify_face_login(data: FaceRegisterRequest, session: Session = Depends(get_
         if "MULTIPLE_FACES_DETECTED" in error_str:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, 
-                detail="🚫 SEGURIDAD: Se detectaron múltiples personas. Solo una persona permitida."
+                detail="SEGURIDAD: Se han detectado varias personas en camara. Por tu seguridad, debes estar solo."
             )
         elif "FACE_TOO_SMALL_OR_PARTIAL" in error_str:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, 
-                detail="🚫 CALIDAD: Rostro parcial o muy lejano. Acércate y mira de frente a la cámara."
+                detail="CALIDAD: Estas muy lejos o tu rostro esta incompleto. Acercate mas a la camara."
             )
         else: # Cubre NO_FACE_DETECTED y otros errores internos.
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, 
-                detail="No se pudo procesar el rostro. Asegúrate de tener buena iluminación."
+                detail="No se detecto ningun rostro. Por favor, asegurate de estar frente a la camara y con buena iluminacion."
             )
 
     # 2. Buscar al usuario y verificar si tiene biometría registrada
@@ -276,16 +316,13 @@ def verify_face_login(data: FaceRegisterRequest, session: Session = Depends(get_
             detail="El usuario no tiene un rostro registrado en el sistema."
         )
 
-    # 3. COMPARACIÓN BIOMÉTRICA (El corazón del login)
-    # verify_face_match se encarga de calcular la distancia coseno
-    # Aumentamos el threshold a 0.65 para ser más tolerantes con la iluminación y ángulos
-    es_valido = verify_face_match(user.face, current_embedding, threshold=0.65)
-
-    if not es_valido:
-        # Aquí es donde lanzamos el error que pediste
+    # 3. VERIFICACION BIOMETRICA ESTRICTA
+    if not verify_face_match(user.face, current_embedding, threshold=0.55):
+        # Se asume que el intento fallido significa que la sesion no avanzo.
+        # No registramos la sesion fallida aqui para no bloquear, o podriamos añadir un contador de intentos.
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, 
-            detail="El rostro no coincide con el usuario. Acceso denegado."
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Biometria no coincide. Acceso denegado.",
         )
 
     # 4. ACTUALIZACIÓN DE SEGURIDAD (Paso 3 completado)

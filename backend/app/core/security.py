@@ -16,7 +16,7 @@ def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 def create_access_token(
-    subject: Union[str, Any], expires_delta: timedelta = None
+    subject: Union[str, Any], sid: int = None, expires_delta: timedelta = None
 ) -> str:
     """Genera un JWT firmado con la llave secreta del servidor"""
     if expires_delta:
@@ -28,6 +28,8 @@ def create_access_token(
     
     # El estandar JWT utiliza "sub" para el identificador principal
     to_encode = {"exp": expire, "sub": str(subject)}
+    if sid is not None:
+        to_encode["sid"] = sid
     
     encoded_jwt = jwt.encode(
         to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM

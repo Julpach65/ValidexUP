@@ -6,6 +6,8 @@ class Token(BaseModel):
     token_type: str
     id_usuario: int
     rol: str
+    has_phone: Optional[bool] = None
     
 class TokenPayload(BaseModel):
     sub: Optional[str] = None
+    sid: Optional[int] = None

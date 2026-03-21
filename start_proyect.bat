@@ -2,9 +2,7 @@
 TITLE Validex UP - Sistema de Arranque Seguro
 COLOR 0B
 
-echo ======================================================
-echo    Validex UP - Blindaje de Entorno Local
-echo ======================================================
+echo    Iniciando proyecto localmente
 echo.
 
 :: 1. Limpieza de procesos fantasma
@@ -34,12 +32,8 @@ echo [4/4] Lanzando Frontend en ventana independiente...
 start "Validex FRONTEND" powershell -Command "Set-Location validex_ui; npm run dev"
 echo. OK.
 
-echo ======================================================
-echo    PROYECTO INICIADO EXITOSAMENTE
-echo ======================================================
-echo.
-echo No cierres esta ventana si quieres ver el estado general.
-echo Los servidores estan corriendo en:
+
+echo Los servidores estan corriendo en los puertos:
 echo - Backend: http://localhost:8000
 echo - Frontend: http://localhost:3000
 echo.

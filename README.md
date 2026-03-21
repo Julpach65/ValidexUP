@@ -17,7 +17,7 @@ El ecosistema se encuentra orquestado mediante Docker Compose, lo que garantiza 
 2. **Servidor de Aplicaciones (API):** Desarrollado en FastAPI, integrando librerías avanzadas de biometría (OpenCV y DeepFace).
 3. **Interfaz de Usuario (Frontend):** Aplicación Next.js 15 optimizada mediante compilación standalone para reducir la huella de memoria en contenedores.
 
-## Pila Tecnologica
+## Stack Tecnologico
 
 ### Frontend
 - Framework: Next.js 15
@@ -61,6 +61,6 @@ Una vez completado el despliegue, la plataforma será accesible en las siguiente
 
 ## Terminologia de Seguridad y Privacidad
 
-El sistema incorpora tecnicas de blindaje contra errores de pre-renderizado (SSR) y gestiona el ciclo de vida de los procesos para evitar estados huerfanos. Todas las transacciones biometricas son comparadas contra una base de datos local pre-autorizada bajo rigurosos protocolos de cumplimiento industrial.
+El sistema incorpora tecnicas de blindaje contra errores de pre-renderizado (SSR) y gestiona el ciclo de vida de los procesos para evitar estados huerfanos. Todas las transacciones biometricas son comparadas contra una base de datos local pre-autorizada bajo rigurosos protocolos de cumplimiento.
 
 PROPIEDAD INTELECTUAL PROTEGIDA. TODOS LOS DERECHOS RESERVADOS 2026.

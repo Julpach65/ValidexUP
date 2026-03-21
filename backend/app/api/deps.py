@@ -8,6 +8,7 @@ from pydantic import ValidationError
 from app.core.config import settings
 from app.core.db import engine
 from app.models.usuarios import Usuario
+from app.models.sesiones import Sesion
 from app.schemas.token import TokenPayload
 
 reusable_oauth2 = OAuth2PasswordBearer(
@@ -33,8 +34,8 @@ def get_current_user(
             )
     except (JWTError, ValidationError):
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Validación de credenciales fallida",
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Tu sesion ha expirado por inactividad. Por favor, inicia sesion nuevamente."
         )
     
     # El 'sub' es el id_usuario
@@ -66,4 +67,35 @@ def get_gerente_user(
             status_code=status.HTTP_403_FORBIDDEN, 
             detail="Operación restringida. Privilegios insuficientes."
         )
+    return current_user
+
+def get_mfa_verified_user(
+    current_user: Usuario = Depends(get_current_active_user),
+    token: str = Depends(reusable_oauth2),
+    db: Session = Depends(get_db)
+) -> Usuario:
+    try:
+        payload = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+        )
+        token_data = TokenPayload(**payload)
+        if token_data.sid is None:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Token antiguo o sin ID de sesión.",
+            )
+    except (JWTError, ValidationError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Tu sesion ha expirado por inactividad. Por favor, inicia sesion nuevamente."
+        )
+    
+    db_session = db.exec(select(Sesion).where(Sesion.id_sesion == token_data.sid)).first()
+    
+    if not db_session or not db_session.paso_3_face:
+         raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Operación bloqueada. Seguridad Biométrica no completada en este dispositivo."
+        )
+
     return current_user
