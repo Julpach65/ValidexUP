@@ -20,7 +20,7 @@ export default function CrearCuentaPage() {
     const [emailError, setEmailError] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
-    
+
     // Limpiar cualquier sesión previa al iniciar un nuevo registro
     React.useEffect(() => {
         localStorage.clear();
@@ -30,7 +30,7 @@ export default function CrearCuentaPage() {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
-        
+
         // Limpiar error de email al escribir
         if (name === 'email') setEmailError('');
     };
@@ -129,7 +129,7 @@ export default function CrearCuentaPage() {
 
                 {/* Contenedor Principal Split (Formulario Izq | Validaciones Der) */}
                 <div className={`w-full max-w-6xl mx-auto flex flex-col lg:flex-row gap-8 lg:gap-16 items-start justify-center transition-all duration-700 ease-in-out ${isSuccess ? 'opacity-0 translate-x-24 blur-sm' : ''}`}>
-                    
+
                     {/* Columna Izquierda: Formulario */}
                     <div className="w-full max-w-md space-y-8 flex-1">
                         <div className="text-center lg:text-left space-y-3">
@@ -148,14 +148,14 @@ export default function CrearCuentaPage() {
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] uppercase tracking-[0.3em] font-black text-slate-500 ml-1">Email Corporativo</label>
-                                <input 
-                                    name="email" 
-                                    type="email" 
-                                    value={formData.email} 
-                                    onChange={handleChange} 
+                                <input
+                                    name="email"
+                                    type="email"
+                                    value={formData.email}
+                                    onChange={handleChange}
                                     onBlur={validateEmail}
-                                    required 
-                                    className={`w-full h-14 bg-transparent border rounded-xl text-white px-5 focus:outline-none focus:ring-2 text-base font-medium transition-all ${emailError ? 'border-red-500 focus:ring-red-500/40' : 'border-slate-800 focus:ring-[#10B981]/40 focus:border-[#10B981]'}`} 
+                                    required
+                                    className={`w-full h-14 bg-transparent border rounded-xl text-white px-5 focus:outline-none focus:ring-2 text-base font-medium transition-all ${emailError ? 'border-red-500 focus:ring-red-500/40' : 'border-slate-800 focus:ring-[#10B981]/40 focus:border-[#10B981]'}`}
                                 />
                                 {emailError && <p className="text-red-400 text-xs font-bold ml-1 animate-pulse">{emailError}</p>}
                             </div>
@@ -163,7 +163,7 @@ export default function CrearCuentaPage() {
                             <div className="space-y-2">
                                 <label className="text-[10px] uppercase tracking-[0.3em] font-black text-slate-500 ml-1">Rol de Acceso</label>
                                 <div className="relative">
-                                    <select 
+                                    <select
                                         name="rol"
                                         value={formData.rol}
                                         onChange={handleChange}
@@ -182,16 +182,16 @@ export default function CrearCuentaPage() {
                             <div className="space-y-2">
                                 <label className="text-[10px] uppercase tracking-[0.3em] font-black text-slate-500 ml-1">Contraseña Segura</label>
                                 <div className="relative">
-                                    <input 
-                                        name="password" 
-                                        type={showPassword ? "text" : "password"} 
-                                        value={formData.password} 
-                                        onChange={handleChange} 
-                                        required 
-                                        className="w-full h-14 bg-transparent border border-slate-800 rounded-xl text-white px-5 pr-12 focus:outline-none focus:ring-2 focus:ring-[#10B981]/40 focus:border-[#10B981] text-base font-medium transition-all" 
+                                    <input
+                                        name="password"
+                                        type={showPassword ? "text" : "password"}
+                                        value={formData.password}
+                                        onChange={handleChange}
+                                        required
+                                        className="w-full h-14 bg-transparent border border-slate-800 rounded-xl text-white px-5 pr-12 focus:outline-none focus:ring-2 focus:ring-[#10B981]/40 focus:border-[#10B981] text-base font-medium transition-all"
                                     />
-                                    <button 
-                                        type="button" 
+                                    <button
+                                        type="button"
                                         onClick={() => setShowPassword(!showPassword)}
                                         className="absolute inset-y-0 right-0 z-10 flex items-center pr-4 text-slate-400 hover:text-white transition-colors"
                                         aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
@@ -206,11 +206,10 @@ export default function CrearCuentaPage() {
                                 fullWidth
                                 isLoading={isLoading && !isSuccess}
                                 disabled={isLoading || isFormIncomplete || !isPasswordValid || isSuccess}
-                                className={`h-14 font-black uppercase tracking-[0.2em] rounded-2xl text-base transition-all duration-500 !mt-6 ${
-                                    isSuccess 
-                                    ? '!bg-[#10B981] !border-[#10B981] !text-white scale-105 shadow-[0_0_40px_rgba(16,185,129,0.6)] animate-pulse' 
-                                    : 'shadow-glow-emerald hover:scale-[1.02] active:scale-[0.98]'
-                                }`}
+                                className={`h-14 font-black uppercase tracking-[0.2em] rounded-2xl text-base transition-all duration-500 !mt-6 ${isSuccess
+                                        ? '!bg-[#10B981] !border-[#10B981] !text-white scale-105 shadow-[0_0_40px_rgba(16,185,129,0.6)] animate-pulse'
+                                        : 'shadow-glow-emerald hover:scale-[1.02] active:scale-[0.98]'
+                                    }`}
                             >
                                 {isSuccess ? (
                                     <div className="flex items-center gap-3 animate-in zoom-in duration-300">

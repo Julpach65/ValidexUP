@@ -134,9 +134,17 @@ export default function RegistroCaraPage() {
 
         setIsLoading(true);
         const context = canvas.getContext('2d');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        context?.drawImage(video, 0, 0);
+        // Cálculo algebraico para extraer solo el cuadrado central (0 ruidos)
+        const size = Math.min(video.videoWidth, video.videoHeight) * 0.75;
+        const sx = (video.videoWidth - size) / 2;
+        const sy = (video.videoHeight - size) / 2;
+
+        canvas.width = size;
+        canvas.height = size;
+        context?.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // drawImage(video, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight)
+        context?.drawImage(video, sx, sy, size, size, 0, 0, size, size);
         
         const photoBase64 = canvas.toDataURL('image/jpeg', 0.8);
         const cleanBase64 = photoBase64.replace(/^data:image\/\w+;base64,/, "");
@@ -317,10 +325,24 @@ export default function RegistroCaraPage() {
 
                             <div className="absolute inset-0 bg-radial-gradient(circle, transparent 30%, rgba(15, 23, 42, 0.4) 100%) pointer-events-none"></div>
 
-                            <div className="absolute top-6 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1 bg-black/60 backdrop-blur-md rounded-full border border-white/10 z-30">
+                            <div className="absolute top-6 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1 bg-black/60 backdrop-blur-md rounded-full border border-white/10 z-40">
                                 <span className="w-2 h-2 rounded-full bg-[#10B981] shadow-[0_0_8px_#10B981] animate-pulse"></span>
                                 <span className="text-[10px] font-bold tracking-widest text-white/90 uppercase">Modo Enrolamiento</span>
                             </div>
+
+                            {/* Overlay de Máscara Biométrica Estricta */}
+                            <div className="absolute inset-0 z-30 pointer-events-none flex flex-col items-center justify-center">
+                                {/* Sombra alrededor del recorte */}
+                                <div className="w-[60%] lg:w-[45%] aspect-square max-w-[400px] border-2 border-[#10B981] shadow-[0_0_0_9999px_rgba(0,0,0,0.7)] relative rounded-3xl overflow-hidden">
+                                     {/* Esquinas animadas para la mira */}
+                                    <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-[#10B981] animate-pulse"></div>
+                                    <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-[#10B981] animate-pulse"></div>
+                                    <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-[#10B981] animate-pulse"></div>
+                                    <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-[#10B981] animate-pulse"></div>
+                                    <div className="absolute inset-0 bg-[#10B981]/5 animate-pulse"></div>
+                                </div>
+                            </div>
+
 
                             <div className="absolute bottom-8 left-0 w-full text-center z-30 pointer-events-none">
                                 <span className={`px-4 py-2 backdrop-blur-md rounded-full text-xs font-medium border transition-all duration-300 ${

@@ -9,30 +9,35 @@ import OnboardingSidebar from '@/components/layout/OnboardingSidebar';
 
 export default function RegisterSMSPage() {
     const router = useRouter();
-    const [step, setStep] = useState<'phone' | 'otp'>('phone');
+    const [step, setStep] = useState<'phone' | 'otp' | 'error'>('phone');
     const [phone, setPhone] = useState('');
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const [isLoading, setIsLoading] = useState(false);
     const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds
+    const [isLoginMode, setIsLoginMode] = useState(false);
 
     //  MODIFICADO: Estado para recuperar el ID del usuario registrado en la pantalla anterior
     const [userId, setUserId] = useState<string | null>(null);
 
-    // ️ MODIFICADO: Efecto para recuperar el ID del localStorage al cargar la página
     useEffect(() => {
         const savedId = localStorage.getItem('id_usuario_actual');
+        const loginModeStr = localStorage.getItem('login_mode');
         if (!savedId) {
-            // Si no hay ID, el usuario se saltó el paso 1. Lo regresamos.
             router.push('/crear-cuenta');
         } else {
             setUserId(savedId);
+            if (loginModeStr === 'true') {
+                setIsLoginMode(true);
+                setStep('otp');
+                setTimeLeft(300);
+            }
         }
     }, [router]);
 
     // Timer logic for OTP
     useEffect(() => {
         let timer: NodeJS.Timeout;
-        if (step === 'otp' && timeLeft > 0) {
+        if ((step === 'otp' || step === 'error') && timeLeft > 0) {
             timer = setInterval(() => {
                 setTimeLeft((prev) => prev - 1);
             }, 1000);
@@ -101,23 +106,39 @@ export default function RegisterSMSPage() {
             const data = await response.json();
 
             if (response.ok && data.status === "SMS_VERIFIED") {
-                // Determinamos el destino basado en si ya tiene cara registrada
                 const destination = data.has_face_registered ? '/login-cara' : '/registro-cara';
-                
                 if (!data.has_face_registered) {
                     localStorage.setItem('registration_step', 'face');
                 }
-                
-                // CORRECCIÓN: Redirección directa al destino.
-                // Evitamos la página intermedia que estaba causando el desvío incorrecto a 'crear-cuenta'.
                 router.push(destination);
             } else {
-                // Redirección a tu pantalla de fallo
-                router.push('/verificar-sms/fallida');
+                setStep('error');
             }
         } catch (error) {
             console.error("Error de verificación:", error);
             alert('Error de conexión al verificar el código.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleResendLoginOTP = async () => {
+        if (!userId) return;
+        setIsLoading(true);
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/resend-login-otp`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_usuario: parseInt(userId) }),
+            });
+            if (response.ok) {
+                setTimeLeft(300);
+                alert("Código reenviado automáticamente a su dispositivo.");
+            } else {
+                alert("No se pudo reenviar el código.");
+            }
+        } catch (error) {
+            alert("Error de conexión al reenviar código.");
         } finally {
             setIsLoading(false);
         }
@@ -243,7 +264,7 @@ export default function RegisterSMSPage() {
                             </Button>
                         </div>
                     </div>
-                ) : (
+                ) : step === 'otp' ? (
                     <div className="w-full max-w-lg space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700">
                         <div className="text-center space-y-4">
                             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/5">
@@ -294,17 +315,55 @@ export default function RegisterSMSPage() {
                                         <Clock className={`w-4 h-4 ${timeLeft < 60 ? 'text-red-500 animate-pulse' : 'text-[#10B981]'}`} />
                                         <span>Expira en: <span className={timeLeft < 60 ? 'text-red-500' : 'text-white'}>{formatTime(timeLeft)}</span></span>
                                     </div>
-                                    <button
-                                        onClick={() => setStep('phone')}
-                                        className="text-[11px] font-black text-slate-500 hover:text-[#10B981] tracking-[0.2em] uppercase transition-colors"
-                                    >
-                                        Editar número
-                                    </button>
+                                    {isLoginMode ? (
+                                        <button
+                                            onClick={handleResendLoginOTP}
+                                            className="text-[11px] font-black text-slate-500 hover:text-[#10B981] tracking-[0.2em] uppercase transition-colors"
+                                        >
+                                            Reenviar Código
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={() => setStep('phone')}
+                                            className="text-[11px] font-black text-slate-500 hover:text-[#10B981] tracking-[0.2em] uppercase transition-colors"
+                                        >
+                                            Editar número
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         </div>
                     </div>
-                )}
+                ) : step === 'error' ? (
+                    <div className="w-full max-w-lg animate-in fade-in zoom-in-95 duration-500 relative z-20">
+                        <div className="flex flex-col items-center text-center">
+                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-red-500/20 bg-red-500/5 mb-6">
+                                <span className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_5px_#ef4444]"></span>
+                                <span className="text-[10px] font-bold tracking-wide text-red-400 uppercase">Verificación Fallida</span>
+                            </div>
+
+                            <h1 className="text-3xl md:text-4xl font-black text-white mb-3 uppercase tracking-tight">Código <span className="text-red-500">Incorrecto</span></h1>
+                            <p className="text-slate-400 mb-10 max-w-sm mx-auto text-sm leading-relaxed font-medium">
+                                El código ingresado es incorrecto o ha expirado.
+                            </p>
+
+                            <div className="flex items-center gap-2 text-red-500 font-black text-xs uppercase tracking-[0.2em] mb-10">
+                                <span className="material-icons-round text-lg">error_outline</span>
+                                <span>Intento no válido</span>
+                            </div>
+
+                            <button
+                                onClick={() => {
+                                    setOtp(['', '', '', '', '', '']);
+                                    setStep('otp');
+                                }}
+                                className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-black uppercase tracking-widest py-5 px-6 rounded-2xl flex items-center justify-center gap-3 transition-all transform hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(239,68,68,0.4)] mb-8"
+                            >
+                                <span>Reintentar Verificación</span>
+                            </button>
+                        </div>
+                    </div>
+                ) : null}
             </main>
         </div>
     );

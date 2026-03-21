@@ -1,92 +1,134 @@
--- ======================================================
--- Validex UP - Esquema Unificado (v1.2 - Docker Ready)
--- Consolidación de Real-Time Pipas y Autenticación
--- ======================================================
+﻿-- Validex UP - Esquema Real Sincronizado (v1.3)
+-- Generado por Antigravity tras AuditorÝa de Fidelidad
 
-CREATE DATABASE IF NOT EXISTS ValidexDB;
-USE ValidexDB;   
+CREATE DATABASE IF NOT EXISTS validexdb;
+USE validexdb;
 
--- 1. TABLA DE USUARIOS
-CREATE TABLE IF NOT EXISTS Usuario (
-    id_usuario INT AUTO_INCREMENT PRIMARY KEY,
-    nombre_completo VARCHAR(100) NOT NULL,
-    username VARCHAR(50) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    telefono VARCHAR(15),
-    face TEXT,
-    rol VARCHAR(20) DEFAULT 'GERENTE',
-    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB;
+CREATE TABLE `roles` (
+  `id_rol` int NOT NULL AUTO_INCREMENT,
+  `nombre` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `descripcion` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`id_rol`),
+  UNIQUE KEY `ix_Roles_nombre` (`nombre`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 2. TABLA DE SESIONES
-CREATE TABLE IF NOT EXISTS Sesiones (
-    id_sesion INT AUTO_INCREMENT PRIMARY KEY,
-    id_usuario INT,
-    token_jwt VARCHAR(500),
-    paso_1_login BOOLEAN DEFAULT FALSE,
-    paso_2_sms BOOLEAN DEFAULT FALSE,
-    paso_3_face BOOLEAN DEFAULT FALSE,
-    dispositivo VARCHAR(255),
-    expira_at DATETIME,
-    FOREIGN KEY (id_usuario) REFERENCES Usuario(id_usuario) ON DELETE CASCADE
-) ENGINE=InnoDB;
+CREATE TABLE `permisos` (
+  `id_permiso` int NOT NULL AUTO_INCREMENT,
+  `nombre` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `descripcion` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`id_permiso`),
+  UNIQUE KEY `ix_Permisos_nombre` (`nombre`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 3. TABLA DE CÓDIGOS OTP
-CREATE TABLE IF NOT EXISTS CodigosOTP (
-    id_otp INT AUTO_INCREMENT PRIMARY KEY,
-    id_usuario INT,
-    codigo VARCHAR(6) NOT NULL,
-    creado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    expira_at DATETIME,
-    usado BOOLEAN DEFAULT FALSE,
-    FOREIGN KEY (id_usuario) REFERENCES Usuario(id_usuario) ON DELETE CASCADE
-) ENGINE=InnoDB;
+CREATE TABLE `pipas` (
+  `id_pipa` int NOT NULL AUTO_INCREMENT,
+  `placa` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `capacidad_litros` decimal(10,2) NOT NULL,
+  `proveedor` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `estado` enum('ACTIVA','INACTIVA','EN_DESCARGA') COLLATE utf8mb4_unicode_ci DEFAULT 'ACTIVA',
+  PRIMARY KEY (`id_pipa`),
+  UNIQUE KEY `placa` (`placa`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 4. TABLA DE PIPAS
-CREATE TABLE IF NOT EXISTS Pipas (
-    id_pipa INT AUTO_INCREMENT PRIMARY KEY,
-    placa VARCHAR(20) UNIQUE NOT NULL,
-    capacidad_litros DECIMAL(10,2) NOT NULL,
-    proveedor VARCHAR(100),
-    estado ENUM('ACTIVA', 'INACTIVA', 'EN_DESCARGA') DEFAULT 'ACTIVA'
-) ENGINE=InnoDB;
+CREATE TABLE `usuario` (
+  `id_usuario` int NOT NULL AUTO_INCREMENT,
+  `nombre_completo` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `username` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `password_hash` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `telefono` varchar(15) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `face` text COLLATE utf8mb4_unicode_ci,
+  `rol` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT 'GERENTE',
+  `fecha_registro` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `email` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `face_embedding` text COLLATE utf8mb4_unicode_ci,
+  `id_rol` int DEFAULT NULL,
+  PRIMARY KEY (`id_usuario`),
+  UNIQUE KEY `username` (`username`),
+  UNIQUE KEY `email` (`email`),
+  KEY `id_rol` (`id_rol`),
+  CONSTRAINT `usuario_ibfk_1` FOREIGN KEY (`id_rol`) REFERENCES `roles` (`id_rol`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 5. TABLA DE OPERACIONES DE DESCARGA (Ciclo de vida en tiempo real)
-CREATE TABLE IF NOT EXISTS OperacionesDescarga (
-    id_operacion    INT AUTO_INCREMENT PRIMARY KEY,
-    id_pipa         INT NOT NULL,
-    id_usuario      INT NOT NULL,
-    volumen_objetivo DECIMAL(10,2) NOT NULL,
-    volumen_actual  DECIMAL(10,2) DEFAULT 0.00,
-    caudal_lpm      DECIMAL(10,2) DEFAULT 0.00,
-    estado          ENUM('INICIADA','EN_PROGRESO','INTERRUMPIDA','FINALIZADA') DEFAULT 'INICIADA',
-    fecha_inicio    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    fecha_fin       DATETIME NULL,
-    FOREIGN KEY (id_pipa)    REFERENCES Pipas(id_pipa)   ON DELETE CASCADE,
-    FOREIGN KEY (id_usuario) REFERENCES Usuario(id_usuario) ON DELETE CASCADE
-) ENGINE=InnoDB;
+CREATE TABLE `rolpermisos` (
+  `id_rol` int NOT NULL,
+  `id_permiso` int NOT NULL,
+  PRIMARY KEY (`id_rol`,`id_permiso`),
+  KEY `id_permiso` (`id_permiso`),
+  CONSTRAINT `rolpermisos_ibfk_1` FOREIGN KEY (`id_rol`) REFERENCES `roles` (`id_rol`),
+  CONSTRAINT `rolpermisos_ibfk_2` FOREIGN KEY (`id_permiso`) REFERENCES `permisos` (`id_permiso`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 6. TABLA DE CARGAS DE COMBUSTIBLE
-CREATE TABLE IF NOT EXISTS CargasCombustible (
-    id_carga INT AUTO_INCREMENT PRIMARY KEY,
-    id_pipa INT,
-    id_operacion INT NULL,
-    litros_descargados DECIMAL(10,2) NOT NULL,
-    tipo_combustible ENUM('MAGNA','PREMIUM','DIESEL'),
-    autorizado_por INT,
-    fecha_carga TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (id_pipa) REFERENCES Pipas(id_pipa) ON DELETE SET NULL,
-    FOREIGN KEY (autorizado_por) REFERENCES Usuario(id_usuario) ON DELETE SET NULL,
-    FOREIGN KEY (id_operacion) REFERENCES OperacionesDescarga(id_operacion) ON DELETE SET NULL
-) ENGINE=InnoDB;
+CREATE TABLE `bitacora` (
+  `id_log` int NOT NULL AUTO_INCREMENT,
+  `id_usuario` int DEFAULT NULL,
+  `accion` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `detalles` text COLLATE utf8mb4_unicode_ci,
+  `ip_address` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `fecha_hora` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id_log`),
+  KEY `id_usuario` (`id_usuario`),
+  CONSTRAINT `bitacora_ibfk_1` FOREIGN KEY (`id_usuario`) REFERENCES `usuario` (`id_usuario`) ON DELETE SET NULL
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 7. TABLA DE BITÁCORA
-CREATE TABLE IF NOT EXISTS Bitacora (
-    id_log INT AUTO_INCREMENT PRIMARY KEY,
-    id_usuario INT,
-    accion VARCHAR(100),
-    detalles TEXT,
-    ip_address VARCHAR(45),
-    fecha_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (id_usuario) REFERENCES Usuario(id_usuario) ON DELETE SET NULL
-) ENGINE=InnoDB;
+CREATE TABLE `codigosotp` (
+  `id_otp` int NOT NULL AUTO_INCREMENT,
+  `id_usuario` int DEFAULT NULL,
+  `codigo` varchar(6) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `creado_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `expira_at` datetime DEFAULT NULL,
+  `usado` tinyint(1) DEFAULT '0',
+  PRIMARY KEY (`id_otp`),
+  KEY `id_usuario` (`id_usuario`),
+  CONSTRAINT `codigosotp_ibfk_1` FOREIGN KEY (`id_usuario`) REFERENCES `usuario` (`id_usuario`) ON DELETE CASCADE
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `sesiones` (
+  `id_sesion` int NOT NULL AUTO_INCREMENT,
+  `id_usuario` int DEFAULT NULL,
+  `token_jwt` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `paso_1_login` tinyint(1) DEFAULT '0',
+  `paso_2_sms` tinyint(1) DEFAULT '0',
+  `paso_3_face` tinyint(1) DEFAULT '0',
+  `dispositivo` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `expira_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id_sesion`),
+  KEY `id_usuario` (`id_usuario`),
+  CONSTRAINT `sesiones_ibfk_1` FOREIGN KEY (`id_usuario`) REFERENCES `usuario` (`id_usuario`) ON DELETE CASCADE
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `operacionesdescarga` (
+  `id_operacion` int NOT NULL AUTO_INCREMENT,
+  `id_pipa` int NOT NULL,
+  `id_usuario` int NOT NULL,
+  `volumen_objetivo` decimal(10,2) NOT NULL,
+  `volumen_actual` decimal(10,2) DEFAULT '0.00',
+  `caudal_lpm` decimal(10,2) DEFAULT '0.00',
+  `estado` enum('INICIADA','EN_PROGRESO','INTERRUMPIDA','FINALIZADA') COLLATE utf8mb4_unicode_ci DEFAULT 'INICIADA',
+  `fecha_inicio` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `fecha_fin` datetime DEFAULT NULL,
+  PRIMARY KEY (`id_operacion`),
+  KEY `id_pipa` (`id_pipa`),
+  KEY `id_usuario` (`id_usuario`),
+  CONSTRAINT `operacionesdescarga_ibfk_1` FOREIGN KEY (`id_pipa`) REFERENCES `pipas` (`id_pipa`) ON DELETE CASCADE,
+  CONSTRAINT `operacionesdescarga_ibfk_2` FOREIGN KEY (`id_usuario`) REFERENCES `usuario` (`id_usuario`) ON DELETE CASCADE
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `cargascombustible` (
+  `id_carga` int NOT NULL AUTO_INCREMENT,
+  `id_pipa` int DEFAULT NULL,
+  `litros_descargados` decimal(10,2) NOT NULL,
+  `tipo_combustible` enum('MAGNA','PREMIUM','DIESEL') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `autorizado_por` int DEFAULT NULL,
+  `fecha_carga` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `estado_carga` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `litros_objetivo` decimal(10,2) DEFAULT NULL,
+  `id_operacion` int DEFAULT NULL,
+  PRIMARY KEY (`id_carga`),
+  KEY `id_pipa` (`id_pipa`),
+  KEY `autorizado_por` (`autorizado_por`),
+  KEY `fk_carga_operacion` (`id_operacion`),
+  CONSTRAINT `cargascombustible_ibfk_1` FOREIGN KEY (`id_pipa`) REFERENCES `pipas` (`id_pipa`) ON DELETE SET NULL,
+  CONSTRAINT `cargascombustible_ibfk_2` FOREIGN KEY (`autorizado_por`) REFERENCES `usuario` (`id_usuario`) ON DELETE SET NULL,
+  CONSTRAINT `fk_carga_operacion` FOREIGN KEY (`id_operacion`) REFERENCES `operacionesdescarga` (`id_operacion`) ON DELETE SET NULL
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+

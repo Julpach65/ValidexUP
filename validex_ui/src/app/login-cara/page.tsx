@@ -22,7 +22,7 @@ export default function LoginCaraPage() {
     useEffect(() => {
         const savedId = localStorage.getItem('id_usuario_actual');
         if (!savedId) {
-            router.push('/login'); 
+            router.push('/'); 
             return; 
         }
         setUserId(savedId);
@@ -94,9 +94,17 @@ export default function LoginCaraPage() {
         setSystemStatus("Capturando imagen de alta fidelidad...");
         
         const context = canvas.getContext('2d');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        context?.drawImage(video, 0, 0);
+        // Cálculo algebraico para extraer solo el cuadrado central (0 ruidos)
+        const size = Math.min(video.videoWidth, video.videoHeight) * 0.75;
+        const sx = (video.videoWidth - size) / 2;
+        const sy = (video.videoHeight - size) / 2;
+
+        canvas.width = size;
+        canvas.height = size;
+        context?.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // drawImage(img, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight)
+        context?.drawImage(video, sx, sy, size, size, 0, 0, size, size);
         
         const cleanBase64 = canvas.toDataURL('image/jpeg', 0.8).replace(/^data:image\/\w+;base64,/, "");
 
@@ -229,7 +237,7 @@ export default function LoginCaraPage() {
                     </div>
                 </div>
 
-                <button onClick={() => router.push('/login')} className="px-5 py-2 rounded-lg border border-slate-700 uppercase text-[10px] font-black">
+                <button onClick={() => router.push('/')} className="px-5 py-2 rounded-lg border border-slate-700 uppercase text-[10px] font-black">
                     Cancelar
                 </button>
             </header>
@@ -262,10 +270,28 @@ export default function LoginCaraPage() {
                             <canvas ref={canvasRef} className="hidden" />
                             
                             {!cameraError && (
-                                <div className="absolute top-4 right-4 flex items-center gap-2 bg-black/50 backdrop-blur px-3 py-1 rounded-full border border-white/10">
-                                    <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
-                                    <span className="text-[10px] font-bold uppercase tracking-wider text-white">REC</span>
-                                </div>
+                                <>
+                                    <div className="absolute top-4 right-4 flex items-center gap-2 bg-black/50 backdrop-blur px-3 py-1 rounded-full border border-white/10 z-40">
+                                        <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+                                        <span className="text-[10px] font-bold uppercase tracking-wider text-white">REC</span>
+                                    </div>
+                                    
+                                    {/* Overlay de Máscara Biométrica Estricta */}
+                                    <div className="absolute inset-0 z-30 pointer-events-none flex flex-col items-center justify-center">
+                                        {/* Sombra alrededor del recorte */}
+                                        <div className="w-[60%] lg:w-[45%] aspect-square max-w-[400px] border-2 border-[#10B981] shadow-[0_0_0_9999px_rgba(0,0,0,0.7)] relative rounded-3xl overflow-hidden">
+                                            {/* Esquinas animadas para la mira */}
+                                            <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-[#10B981] animate-pulse"></div>
+                                            <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-[#10B981] animate-pulse"></div>
+                                            <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-[#10B981] animate-pulse"></div>
+                                            <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-[#10B981] animate-pulse"></div>
+                                            <div className="absolute inset-0 bg-[#10B981]/5 animate-pulse"></div>
+                                        </div>
+                                        <div className="mt-6 text-[#10B981] text-[10px] font-black tracking-[0.2em] uppercase bg-emerald-950/80 px-6 py-2 rounded-full backdrop-blur-md border border-[#10B981]/30">
+                                            Alinee su rostro con la guía
+                                        </div>
+                                    </div>
+                                </>
                             )}
                         </div>
                     </div>

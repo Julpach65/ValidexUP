@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { API_BASE_URL } from '@/config/api'
 import { useAuth } from '@/hooks/useAuth'
@@ -22,6 +22,46 @@ export default function PipasPage() {
     const [volumen, setVolumen] = useState('')
     const [loading, setLoading] = useState(false)
     const [initialLoading, setInitialLoading] = useState(true)
+
+    const [showFaceModal, setShowFaceModal] = useState(false);
+    const [faceSystemStatus, setFaceSystemStatus] = useState("Alinee su rostro con la guía");
+    const [cameraError, setCameraError] = useState<string | null>(null);
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const [isScanning, setIsScanning] = useState(false);
+    const [stream, setStream] = useState<MediaStream | null>(null);
+
+    useEffect(() => {
+        if (showFaceModal) {
+            startCamera();
+        } else {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                setStream(null);
+            }
+        }
+        return () => {
+             if (stream) stream.getTracks().forEach(track => track.stop());
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [showFaceModal]);
+
+    const startCamera = async () => {
+        setCameraError(null);
+        try {
+            const mediaStream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: 'user', width: 640, height: 480 } 
+            });
+            setStream(mediaStream);
+            if (videoRef.current) videoRef.current.srcObject = mediaStream;
+        } catch (err: any) {
+            console.error("Error camara:", err);
+            let errorMessage = "No se pudo acceder a la camara. Verifica los permisos.";
+            if (err.name === 'NotAllowedError') errorMessage = "Acceso denegado. Haz clic en el candado junto a la URL, selecciona Permitir en la camara, y recarga acceso.";
+            if (err.name === 'NotFoundError') errorMessage = "No se encontro ninguna camara en tu dispositivo.";
+            setCameraError(errorMessage);
+        }
+    };
 
     useEffect(() => {
         if (!authLoading && user?.rol === 'VISOR') {
@@ -56,9 +96,35 @@ export default function PipasPage() {
 
     const handleAutorizar = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!selectedPipa) return;
+        if (!selectedPipa || !volumen) return;
+        setShowFaceModal(true); // Dispara Step-Up Auth
+    }
+
+    const captureAndExecute = () => {
+        const video = videoRef.current;
+        const canvas = canvasRef.current;
+        if (!video || !canvas || !selectedPipa || !volumen) return;
         
-        setLoading(true)
+        setIsScanning(true);
+        setFaceSystemStatus("Procesando firma biométrica AES...");
+
+        const context = canvas.getContext('2d');
+        const size = Math.min(video.videoWidth, video.videoHeight);
+        const sx = (video.videoWidth - size) / 2;
+        const sy = (video.videoHeight - size) / 2;
+
+        canvas.width = size;
+        canvas.height = size;
+        context?.clearRect(0, 0, size, size);
+        context?.drawImage(video, sx, sy, size, size, 0, 0, size, size);
+        
+        const base64Image = canvas.toDataURL('image/jpeg', 0.8).replace(/^data:image\/\w+;base64,/, "");
+        
+        executeCarga(base64Image);
+    }
+
+    const executeCarga = async (imageData: string) => {
+        setLoading(true);
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout para estabilidad asíncrona
 
@@ -71,9 +137,10 @@ export default function PipasPage() {
                     'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({
-                    id_pipa: selectedPipa.id_pipa,
+                    id_pipa: selectedPipa?.id_pipa,
                     volumen_objetivo: Number(volumen),
-                    tipo_combustible: 'MAGNA'
+                    tipo_combustible: 'MAGNA',
+                    image_data: imageData // Envío Atómico
                 }),
                 signal: controller.signal
             });
@@ -82,26 +149,37 @@ export default function PipasPage() {
 
             if (response.ok) {
                 const data = await response.json();
-                router.push(`/pipas/descarga-en-curso?id_operacion=${data.id_operacion}`)
+                setFaceSystemStatus("Autenticado. Iniciando Descarga...");
+                setTimeout(() => {
+                    setShowFaceModal(false);
+                    router.push(`/pipas/descarga-en-curso?id_operacion=${data.id_operacion}`);
+                }, 1000);
             } else {
+                if (response.status === 401 || response.status === 403) {
+                     alert("Tu sesion ha caducado por seguridad. Por favor ingresa de nuevo.");
+                     localStorage.clear();
+                     router.push('/');
+                     return;
+                }
                 const errData = await response.json();
-                // Si la pipa ya está en descarga, es probable que la petición anterior se haya completado en el backend
-                // pero el cliente no recibió el OK por latencia. Intentamos recuperar.
                 if (errData.detail?.includes("EN_DESCARGA")) {
-                    console.warn("Pipa detectada en descarga (Recuperación Automática)");
-                    // El poll del useEffect principal eventualmente debería encontrar la op activa, 
-                    // pero aquí forzamos un refresh de la lista de pipas para confirmar.
+                    console.warn("Pipa detectada en descarga (Recuperacion Automatica)");
                     window.location.reload(); 
                 } else {
-                    alert(`Error Operativo: ${errData.detail || "Permisos Insuficientes"}`);
+                    alert(`Error Operativo: ${errData.detail || "Permisos Insuficientes o Biometria Invalida"}`);
+                    setShowFaceModal(false);
+                    setIsScanning(false);
+                    setFaceSystemStatus("Alinee su rostro con la guia");
                 }
             }
         } catch (error: any) {
             clearTimeout(timeoutId);
+            setIsScanning(false);
+            setFaceSystemStatus("Error de conectividad");
+            setShowFaceModal(false);
             if (error.name === 'AbortError') {
                 alert('Tiempo de espera extendido: La operación se marcó en el servidor pero la respuesta tardó demasiado. Verifique el estado de la pipa.');
             } else if (error.message?.includes('fetch')) {
-                // Si falló el fetch pero la pipa se bloqueó, el usuario lo verá al recargar.
                 alert('Inestabilidad de Red detectada. Verifique si la pipa cambió a EN_DESCARGA.');
             } else {
                 alert(`Error crítico: ${error.message || 'Error desconocido contactando con el motor.'}`);
@@ -289,6 +367,82 @@ export default function PipasPage() {
                         )}
                     </div>
                 </div>
+
+                {/* MODAL STEP-UP AUTH */}
+                {showFaceModal && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0B1120]/90 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+                        <div className="w-full max-w-md bg-[#151e32] border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col relative">
+                            {/* Header Modal */}
+                            <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between bg-[#0f1623]">
+                                <div className="flex items-center gap-2">
+                                    <span className="material-icons-outlined text-[#10B981] text-xl">face</span>
+                                    <h3 className="text-sm font-black text-white uppercase tracking-widest">Aprobación Biométrica</h3>
+                                </div>
+                                {!isScanning && (
+                                    <button onClick={() => setShowFaceModal(false)} className="text-slate-500 hover:text-white transition-colors">
+                                        <span className="material-icons-round">close</span>
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Contenido Modal */}
+                            <div className="p-6 flex flex-col items-center">
+                                <p className="text-xs text-slate-400 font-bold tracking-wide text-center uppercase mb-6">
+                                    Autorizando descarga de <span className="text-white">{Number(volumen).toLocaleString()} L</span>
+                                </p>
+
+                                <div className="relative w-full aspect-square max-w-[280px] rounded-2xl overflow-hidden border-2 border-slate-700 bg-black shadow-inner shadow-black">
+                                    {cameraError ? (
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center bg-slate-900/80">
+                                            <span className="material-icons-round text-red-500 text-4xl mb-2">videocam_off</span>
+                                            <span className="text-red-400 text-xs font-bold">{cameraError}</span>
+                                            <button 
+                                                onClick={startCamera}
+                                                className="mt-4 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full text-white text-[10px] font-black tracking-widest uppercase transition-all"
+                                            >
+                                                REINTENTAR ACCESO
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover scale-x-[-1]" />
+                                            {/* Overlay Máscara */}
+                                            <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center z-10">
+                                                <div className="w-3/4 h-3/4 border-2 border-[#10B981] rounded-3xl shadow-[0_0_0_9999px_rgba(0,0,0,0.6)] relative overflow-hidden">
+                                                    <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-[#10B981] animate-pulse"></div>
+                                                    <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-[#10B981] animate-pulse"></div>
+                                                    <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-[#10B981] animate-pulse"></div>
+                                                    <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-[#10B981] animate-pulse"></div>
+                                                    <div className="absolute inset-0 bg-[#10B981]/10"></div>
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                                <canvas ref={canvasRef} className="hidden" />
+
+                                <div className="mt-6 flex flex-col items-center w-full">
+                                    <p className="text-xs text-[#10B981] font-black uppercase tracking-widest mb-4">
+                                        {faceSystemStatus}
+                                    </p>
+                                    
+                                    <button
+                                        onClick={captureAndExecute}
+                                        disabled={isScanning || !!cameraError || loading}
+                                        className="w-full py-4 bg-gradient-to-r from-[#10B981] to-emerald-700 hover:from-emerald-600 hover:to-emerald-800 border border-[#10B981]/50 text-white font-black uppercase tracking-[0.2em] rounded-2xl shadow-glow-emerald transition-all transform hover:scale-[1.02] active:scale-95 text-[11px] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                    >
+                                        {(isScanning || loading) ? (
+                                            <span className="material-icons-round animate-spin">sync</span>
+                                        ) : (
+                                            <span className="material-icons-round">camera</span>
+                                        )}
+                                        <span>{(isScanning || loading) ? 'Procesando Transacción...' : 'Confirmar Identidad y Descargar'}</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </main>
 
             <footer className="mt-auto border-t border-gray-800 bg-[#0d121d] py-6">

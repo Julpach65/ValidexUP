@@ -74,6 +74,13 @@ export default function LoginPage() {
         localStorage.setItem('access_token', data.access_token);
         localStorage.setItem('id_usuario_actual', data.id_usuario);
         localStorage.setItem('registration_step', 'sms');
+        
+        if (data.has_phone) {
+            localStorage.setItem('login_mode', 'true');
+        } else {
+            localStorage.removeItem('login_mode');
+        }
+        
         router.push('/verificar-sms');
       } else {
         alert(data.detail || "Credenciales incorrectas");
