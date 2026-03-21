@@ -1,0 +1,17 @@
+:80 {
+    # Evitar logs masivos de healthchecks si se desea (opcional)
+    # log {
+    #     output stdout
+    #     level ERROR
+    # }
+
+    # Rutar todo lo que empiece con /api hacia FastAPI (Puerto 8000 oculto)
+    handle /api/* {
+        reverse_proxy validex_backend:8000
+    }
+    
+    # Rutar el resto de la interfaz grafica web hacia Next.js (Puerto 3000 oculto)
+    handle /* {
+        reverse_proxy validex_frontend:3000
+    }
+}

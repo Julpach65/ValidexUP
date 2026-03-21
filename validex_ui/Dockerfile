@@ -21,9 +21,7 @@ RUN npm install
 
 COPY . .
 
-# Variable de entorno necesaria para el build de Next.js
-# El frontend en produccion apunta al servicio 'backend' de Docker Compose
-ENV NEXT_PUBLIC_API_URL=http://backend:8000
+# NEXT_PUBLIC_API_URL removido. Resolucion de URLs dinamica via Proxy Caddy.
 # Aumentar memoria de Node para evitar fallos del worker
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 

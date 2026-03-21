@@ -38,6 +38,10 @@ COPY --chown=validexuser:validexgroup ./app ./app
 # Cambiar al usuario no-root
 USER validexuser
 
+# Pre-descargar modelos de IA para evitar shock térmico (500MB) en producción.
+# Se ejecuta como no-root para guardarlo en /home/validexuser/.deepface
+RUN python -c "import os; os.makedirs('/home/validexuser/.deepface/weights', exist_ok=True); from deepface import DeepFace; DeepFace.build_model('VGG-Face')"
+
 EXPOSE 8000
 
 # Healthcheck: verifica que la API responda correctamente

@@ -1,17 +1,8 @@
-# Node / Next.js
-node_modules/
-.next/
-out/
-build/
-.env*.local
-.vercel/
-
 # Python / FastAPI
 __pycache__/
 *.py[cod]
 *$py.class
 venv/
-.env
 .env/
 env/
 .venv/

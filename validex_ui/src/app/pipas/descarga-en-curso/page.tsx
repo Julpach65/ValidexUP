@@ -68,9 +68,8 @@ function DescargaContent() {
         }
 
         const token = localStorage.getItem('access_token')
-        const wsProtocol = API_BASE_URL.startsWith('https') ? 'wss' : 'ws';
-        const wsBaseUrl = API_BASE_URL.replace(/^https?:\/\//, '');
-        const wsUrl = `${wsProtocol}://${wsBaseUrl}/operaciones/ws/descarga/${idOperacion}?token=${token}`;
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+        const wsUrl = `${wsProtocol}://${window.location.host}/api/v1/operaciones/ws/descarga/${idOperacion}?token=${token}`;
         const ws = new WebSocket(wsUrl)
         wsRef.current = ws
 

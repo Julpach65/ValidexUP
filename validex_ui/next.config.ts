@@ -17,13 +17,17 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
 
-  // Proxy dinamico: funciona en local y en contenedor sin cambios de codigo.
+  // Proxy dinamico: emula a Caddy en modo local (npm run dev) para evitar 404 sin romper AWS
   async rewrites() {
     return [
       {
         source: '/api/backend/:path*',
         destination: `${BACKEND_URL}/:path*`,
       },
+      {
+        source: '/api/v1/:path*',
+        destination: `${BACKEND_URL}/api/v1/:path*`,
+      }
     ];
   },
 
