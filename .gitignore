@@ -32,6 +32,7 @@ desktop.ini
 validex_ui/tsconfig.tsbuildinfo
 backend/.shadow_state/
 *.txt
+!requirements.txt
 !README.md
 !GUIA_EJECUCION.md
 !guia_pruebas_equipo.md
