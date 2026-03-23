@@ -20,6 +20,8 @@ export default function RegistroCaraPage() {
 
     const [registrationSuccess, setRegistrationSuccess] = useState(false);
     const [finalStepReached, setFinalStepReached] = useState(false);
+    const [cameraError, setCameraError] = useState<string | null>(null);
+    const [isSecure, setIsSecure] = useState(true);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -114,15 +116,52 @@ export default function RegistroCaraPage() {
     };
 
     const startCamera = async () => {
+        setCameraError(null);
+        
+        // Verificación de Contexto Seguro
+        if (!window.isSecureContext && window.location.hostname !== 'localhost') {
+            setIsSecure(false);
+            setCameraError("Navegador Bloqueado: La cámara requiere HTTPS o Localhost para funcionar por seguridad.");
+            return;
+        }
+
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            setCameraError("Tu navegador no soporta el acceso a la cámara o está bloqueado por políticas de seguridad.");
+            return;
+        }
+
+        setFeedback("Solicitando acceso al hardware...");
+
         try {
             const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-                video: { facingMode: 'user', width: 1280, height: 720 } 
+                video: { 
+                    facingMode: 'user', 
+                    width: { ideal: 1280 }, 
+                    height: { ideal: 720 } 
+                } 
             });
+            console.log("Stream obtenido con éxito");
             setStream(mediaStream);
-            if (videoRef.current) videoRef.current.srcObject = mediaStream;
-        } catch (err) {
-            console.error("Error cámara:", err);
-            alert("Permite el acceso a la cámara para el registro.");
+            if (videoRef.current) {
+                videoRef.current.srcObject = mediaStream;
+                videoRef.current.onloadedmetadata = () => {
+                    videoRef.current?.play();
+                    setFeedback("Cámara lista. Posiciona tu cara.");
+                };
+            }
+        } catch (err: any) {
+            console.error("Error detallado de cámara:", err);
+            let msg = "Error al abrir la cámara.";
+            if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                msg = "Acceso denegado. Por favor, permite el uso de la cámara en los ajustes del navegador.";
+            } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+                msg = "No se detectó ninguna cámara conectada.";
+            } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+                msg = "La cámara está siendo usada por otra aplicación.";
+            }
+            setCameraError(msg);
+            setFeedback("Fallo de sensores");
+            setFeedbackStatus('warning');
         }
     };
 
@@ -320,8 +359,37 @@ export default function RegistroCaraPage() {
 
                     <div className="flex-1 w-full min-h-0 flex items-center justify-center relative">
                         <div className={`relative h-full aspect-[4/3] max-w-full bg-black rounded-2xl overflow-hidden shadow-2xl border border-slate-700/50 transition-all ${isShaking ? 'shake-error border-red-500/50' : ''}`}>
-                            <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover scale-x-[-1]" />
-                            <canvas ref={canvasRef} className="hidden" />
+                            {cameraError ? (
+                                <div className="absolute inset-0 z-50 flex flex-col items-center justify-center p-6 bg-slate-950/90 backdrop-blur-md text-center">
+                                    <span className="material-icons-round text-5xl text-red-500 mb-4 animate-pulse">videocam_off</span>
+                                    <h3 className="text-white font-bold mb-2">Error de Biometría</h3>
+                                    <p className="text-slate-400 text-xs mb-6 max-w-xs uppercase tracking-wider leading-relaxed">
+                                        {cameraError}
+                                    </p>
+                                    <button 
+                                        onClick={() => { setCameraError(null); startCamera(); }}
+                                        className="px-6 py-2 bg-[#10B981] text-black font-black text-[10px] rounded-full hover:scale-105 transition-all uppercase tracking-widest"
+                                    >
+                                        Reintentar
+                                    </button>
+                                    {!isSecure && (
+                                        <p className="mt-4 text-[9px] text-amber-500 font-bold max-w-xs">
+                                            CONSEJO: Usa siempre HTTPS en producción o localhost en desarrollo.
+                                        </p>
+                                    )}
+                                </div>
+                            ) : (
+                                <>
+                                    <video 
+                                        ref={videoRef} 
+                                        autoPlay 
+                                        playsInline 
+                                        muted
+                                        className="w-full h-full object-cover scale-x-[-1]" 
+                                    />
+                                    <canvas ref={canvasRef} className="hidden" />
+                                </>
+                            )}
 
                             <div className="absolute inset-0 bg-radial-gradient(circle, transparent 30%, rgba(15, 23, 42, 0.4) 100%) pointer-events-none"></div>
 

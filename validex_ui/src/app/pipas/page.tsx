@@ -30,6 +30,7 @@ export default function PipasPage() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [isScanning, setIsScanning] = useState(false);
     const [stream, setStream] = useState<MediaStream | null>(null);
+    const [isSecure, setIsSecure] = useState(true);
 
     useEffect(() => {
         if (showFaceModal) {
@@ -48,17 +49,44 @@ export default function PipasPage() {
 
     const startCamera = async () => {
         setCameraError(null);
+        
+        // Verificación de Contexto Seguro
+        if (!window.isSecureContext && window.location.hostname !== 'localhost') {
+            setIsSecure(false);
+            setCameraError("La cámara requiere HTTPS para funcionar en producción.");
+            return;
+        }
+
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            setCameraError("Navegador Bloqueado o Sin Soporte de Cámara.");
+            return;
+        }
+
         try {
             const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-                video: { facingMode: 'user', width: 640, height: 480 } 
+                video: { 
+                    facingMode: 'user', 
+                    width: { ideal: 640 }, 
+                    height: { ideal: 480 } 
+                } 
             });
             setStream(mediaStream);
-            if (videoRef.current) videoRef.current.srcObject = mediaStream;
+            if (videoRef.current) {
+                videoRef.current.srcObject = mediaStream;
+                videoRef.current.onloadedmetadata = () => {
+                    videoRef.current?.play();
+                };
+            }
         } catch (err: any) {
             console.error("Error camara:", err);
             let errorMessage = "No se pudo acceder a la camara. Verifica los permisos.";
-            if (err.name === 'NotAllowedError') errorMessage = "Acceso denegado. Haz clic en el candado junto a la URL, selecciona Permitir en la camara, y recarga acceso.";
-            if (err.name === 'NotFoundError') errorMessage = "No se encontro ninguna camara en tu dispositivo.";
+            if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                errorMessage = "Acceso denegado. Permite la cámara en el navegador.";
+            } else if (err.name === 'NotFoundError') {
+                errorMessage = "No se encontro ninguna camara activa.";
+            } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+                errorMessage = "Cámara ocupada por otra app.";
+            }
             setCameraError(errorMessage);
         }
     };
@@ -393,19 +421,33 @@ export default function PipasPage() {
 
                                 <div className="relative w-full aspect-square max-w-[280px] rounded-2xl overflow-hidden border-2 border-slate-700 bg-black shadow-inner shadow-black">
                                     {cameraError ? (
-                                        <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center bg-slate-900/80">
-                                            <span className="material-icons-round text-red-500 text-4xl mb-2">videocam_off</span>
-                                            <span className="text-red-400 text-xs font-bold">{cameraError}</span>
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-slate-950/90 backdrop-blur-md z-50">
+                                            <span className="material-icons-round text-red-500 text-4xl mb-3 animate-pulse">videocam_off</span>
+                                            <h4 className="text-white font-bold text-xs mb-1">Fallo de Dispositivo</h4>
+                                            <p className="text-slate-400 text-[10px] leading-relaxed mb-4 uppercase tracking-wider">
+                                                {cameraError}
+                                            </p>
                                             <button 
-                                                onClick={startCamera}
-                                                className="mt-4 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full text-white text-[10px] font-black tracking-widest uppercase transition-all"
+                                                onClick={() => { setCameraError(null); startCamera(); }}
+                                                className="px-6 py-2 bg-[#10B981] text-black font-black text-[9px] rounded-full hover:scale-105 transition-all uppercase tracking-widest"
                                             >
-                                                REINTENTAR ACCESO
+                                                REINTENTAR
                                             </button>
+                                            {!isSecure && (
+                                                <p className="mt-4 text-[8px] text-amber-500 font-bold uppercase italic">
+                                                    (Usa HTTPS o LOCALHOST)
+                                                </p>
+                                            )}
                                         </div>
                                     ) : (
                                         <>
-                                            <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover scale-x-[-1]" />
+                                            <video 
+                                                ref={videoRef} 
+                                                autoPlay 
+                                                playsInline 
+                                                muted
+                                                className="w-full h-full object-cover scale-x-[-1]" 
+                                            />
                                             {/* Overlay Máscara */}
                                             <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center z-10">
                                                 <div className="w-3/4 h-3/4 border-2 border-[#10B981] rounded-3xl shadow-[0_0_0_9999px_rgba(0,0,0,0.6)] relative overflow-hidden">

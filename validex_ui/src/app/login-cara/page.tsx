@@ -18,6 +18,7 @@ export default function LoginCaraPage() {
     const [accessGranted, setAccessGranted] = useState(false);
     const [userName, setUserName] = useState("");
     const [systemStatus, setSystemStatus] = useState("Analizando firma biométrica...");
+    const [isSecure, setIsSecure] = useState(true);
 
     useEffect(() => {
         const savedId = localStorage.getItem('id_usuario_actual');
@@ -56,17 +57,44 @@ export default function LoginCaraPage() {
 
     const startCamera = async () => {
         setCameraError(null);
+        
+        // Verificación de Contexto Seguro
+        if (!window.isSecureContext && window.location.hostname !== 'localhost') {
+            setIsSecure(false);
+            setCameraError("Navegador Bloqueado: La cámara requiere HTTPS o Localhost para funcionar por seguridad.");
+            return;
+        }
+
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            setCameraError("Tu navegador no soporta el acceso a la cámara o el sitio no es seguro (HTTPS).");
+            return;
+        }
+
         try {
             const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-                video: { facingMode: 'user', width: 1280, height: 720 } 
+                video: { 
+                    facingMode: 'user', 
+                    width: { ideal: 1280 }, 
+                    height: { ideal: 720 } 
+                } 
             });
             setStream(mediaStream);
-            if (videoRef.current) videoRef.current.srcObject = mediaStream;
+            if (videoRef.current) {
+                videoRef.current.srcObject = mediaStream;
+                videoRef.current.onloadedmetadata = () => {
+                    videoRef.current?.play();
+                };
+            }
         } catch (err: any) {
-            console.error("Error cámara:", err);
+            console.error("Error detallado de cámara:", err);
             let errorMessage = "No se pudo acceder a la cámara. Por favor, verifica los permisos.";
-            if (err.name === 'NotAllowedError') errorMessage = "Acceso a la cámara denegado. Actívala en la configuración de tu navegador.";
-            if (err.name === 'NotFoundError') errorMessage = "No se encontró ninguna cámara disponible en este dispositivo.";
+            if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                errorMessage = "Acceso denegado. Actívalo en la configuración de tu navegador.";
+            } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+                errorMessage = "No se encontró ninguna cámara disponible.";
+            } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+                errorMessage = "La cámara está ocupada por otra aplicación.";
+            }
             setCameraError(errorMessage);
         }
     };
@@ -254,18 +282,32 @@ export default function LoginCaraPage() {
                     <div className="flex-1 w-full min-h-0 flex items-center justify-center relative">
                         <div className={`relative h-full aspect-[4/3] max-w-full bg-black rounded-2xl overflow-hidden shadow-2xl border border-slate-700/50 transition-all ${isShaking ? 'shake-error border-red-500/50' : ''}`}>
                             {cameraError ? (
-                                <div className="absolute inset-0 flex flex-col items-center justify-center p-8 bg-slate-950/80 backdrop-blur-md z-30 text-center space-y-4">
+                                <div className="absolute inset-0 flex flex-col items-center justify-center p-8 bg-slate-950/90 backdrop-blur-md z-30 text-center space-y-4">
                                     <span className="material-icons-round text-6xl text-red-500 animate-pulse">videocam_off</span>
-                                    <p className="text-white font-bold text-sm leading-relaxed">{cameraError}</p>
+                                    <h3 className="text-white font-bold">Error de Acceso</h3>
+                                    <p className="text-slate-400 text-xs leading-relaxed max-w-xs uppercase tracking-wider">
+                                        {cameraError}
+                                    </p>
                                     <button 
-                                        onClick={startCamera}
-                                        className="px-6 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full text-white text-[10px] font-black tracking-widest uppercase transition-all"
+                                        onClick={() => { setCameraError(null); startCamera(); }}
+                                        className="px-8 py-2 bg-[#10B981] text-black font-black text-[10px] rounded-full hover:scale-105 transition-all uppercase tracking-widest shadow-lg shadow-emerald-500/20"
                                     >
-                                        REINTENTAR ACCESO
+                                        REINTENTAR SENSORES
                                     </button>
+                                    {!isSecure && (
+                                        <p className="mt-2 text-[9px] text-amber-500 font-bold max-w-xs italic">
+                                            (Requisito: HTTPS o LOCALHOST)
+                                        </p>
+                                    )}
                                 </div>
                             ) : (
-                                <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover scale-x-[-1]" />
+                                <video 
+                                    ref={videoRef} 
+                                    autoPlay 
+                                    playsInline 
+                                    muted
+                                    className="w-full h-full object-cover scale-x-[-1]" 
+                                />
                             )}
                             <canvas ref={canvasRef} className="hidden" />
                             
