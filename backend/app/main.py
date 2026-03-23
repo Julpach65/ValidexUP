@@ -76,17 +76,10 @@ app = FastAPI(
 # Configuración de CORS para Next.js (desarrollo y producción)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:3001",
-        "http://127.0.0.1:3001",
-        "http://localhost",
-        # Origenes para entorno Docker
-        "http://frontend:3000",
-        "http://validex_frontend:3000",
-    ],
-    allow_origin_regex=r"http://localhost:\d+",  # Cualquier puerto de localhost
+    # SOPORTE PARA IP DINÁMICA: Permitimos cualquier origen mediante regex para evitar bloqueos
+    # tras un reinicio de IP en AWS (Recomendado: Usar Elastic IP en AWS para producción real)
+    allow_origins=["*"],
+    allow_origin_regex=None,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],

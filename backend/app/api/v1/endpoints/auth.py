@@ -317,7 +317,7 @@ def verify_face_login(data: FaceRegisterRequest, session: Session = Depends(get_
         )
 
     # 3. VERIFICACION BIOMETRICA ESTRICTA
-    if not verify_face_match(user.face, current_embedding, threshold=0.55):
+    if not verify_face_match(user.face, current_embedding, threshold=0.45):
         # Se asume que el intento fallido significa que la sesion no avanzo.
         # No registramos la sesion fallida aqui para no bloquear, o podriamos añadir un contador de intentos.
         raise HTTPException(

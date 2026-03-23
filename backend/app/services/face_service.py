@@ -79,7 +79,7 @@ def get_face_embedding(base64_image):
         print(f"Error interno de DeepFace durante la representación: {e}")
         raise ValueError("NO_FACE_DETECTED") from e
 
-def verify_face_match(stored_embedding_str: str, current_embedding: list, threshold: float = 0.35) -> bool:
+def verify_face_match(stored_embedding_str: str, current_embedding: list, threshold: float = 0.45) -> bool:
     """
     Compara el embedding guardado en BD (TEXT/JSON) con el nuevo capturado (List).
     Usa Distancia Coseno.
